@@ -60,14 +60,22 @@ def discover_plugins():
     """Discover and load connector plugins from entry points and built-in modules."""
     # Load built-in connectors
     builtin_modules = [
-        "datagen.connectors.postgres",
-        "datagen.connectors.mongodb",
-        "datagen.connectors.elasticsearch",
-        "datagen.connectors.prometheus",
-        "datagen.connectors.servicenow",
-        "datagen.connectors.kafka",
-        "datagen.connectors.aws_s3",
         "datagen.connectors.aws_dynamodb",
+        "datagen.connectors.aws_kinesis",
+        "datagen.connectors.aws_s3",
+        "datagen.connectors.aws_sqs",
+        "datagen.connectors.clickhouse",
+        "datagen.connectors.cribl",
+        "datagen.connectors.elasticsearch",
+        "datagen.connectors.grafana_loki",
+        "datagen.connectors.kafka",
+        "datagen.connectors.mongodb",
+        "datagen.connectors.postgres",
+        "datagen.connectors.prometheus",
+        "datagen.connectors.redis_connector",
+        "datagen.connectors.servicenow",
+        "datagen.connectors.trino",
+        "datagen.connectors.victoriametrics",
     ]
 
     for module_name in builtin_modules:

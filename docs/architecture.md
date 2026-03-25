@@ -3,7 +3,8 @@
 ## Overview
 
 GenForge is a full-stack test data generation platform. It generates realistic, schema-driven
-synthetic data and pushes it directly into external systems through authenticated connectors.
+synthetic data and pushes it directly into external systems through 16 authenticated connectors.
+User authentication with role-based access control protects admin operations.
 
 ---
 
@@ -16,11 +17,13 @@ synthetic data and pushes it directly into external systems through authenticate
 │                                                                  │
 │  ┌────────────────┐  ┌───────────────┐  ┌─────────────────────┐ │
 │  │ Schema Studio   │  │ Connections   │  │ Generate & Push     │ │
-│  │ (54 templates,  │  │ (8 targets,   │  │ (preview, batch,    │ │
+│  │ (54 templates,  │  │ (16 targets,  │  │ (preview, batch,    │ │
 │  │  load from file)│  │  auth config) │  │  edge-case toggle)  │ │
 │  └───────┬────────┘  └──────┬────────┘  └──────────┬──────────┘ │
-│          └──────────────────┼──────────────────────┘             │
-│                             │  REST + WebSocket                  │
+│  ┌───────┴────────┐         │                       │            │
+│  │ User Mgmt      │         │                       │            │
+│  │ (admin only)   │─────────┼───────────────────────┘            │
+│  └────────────────┘         │  REST + WebSocket                  │
 └─────────────────────────────┼────────────────────────────────────┘
                               ▼
 ┌──────────────────────────────────────────────────────────────────┐
@@ -28,8 +31,8 @@ synthetic data and pushes it directly into external systems through authenticate
 │                    http://localhost:3800                          │
 │                                                                  │
 │  ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌──────────────────┐  │
-│  │ /api/    │ │ /api/    │ │ /api/     │ │ /api/health      │  │
-│  │ schemas  │ │ generate │ │ jobs      │ │ /ws (realtime)   │  │
+│  │ /api/    │ │ /api/    │ │ /api/     │ │ /api/auth/login  │  │
+│  │ schemas  │ │ generate │ │ jobs      │ │ /api/auth/users  │  │
 │  └────┬─────┘ └────┬─────┘ └─────┬─────┘ └──────────────────┘  │
 │       │             │             │                               │
 │       ▼             ▼             ▼                               │
@@ -39,13 +42,13 @@ synthetic data and pushes it directly into external systems through authenticate
 │  └──────────────────────────┬──────────────────────────────────┘ │
 │                              │                                    │
 │  ┌──────────────────────────▼──────────────────────────────────┐ │
-│  │                    Connector Layer                           │ │
+│  │                    Connector Layer (16 connectors)           │ │
 │  │  base.py → registry.py → [servicenow, kafka, elastic, …]   │ │
 │  └──────────────────────────┬──────────────────────────────────┘ │
 │                              │                                    │
 │  ┌──────────────────────────▼──────────────────────────────────┐ │
 │  │              PostgreSQL Database (psycopg3)                  │ │
-│  │  schemas · connections · jobs  (async connection pool)       │ │
+│  │  schemas · connections · jobs · users (async pool)          │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────┼───────────────────────────────────┘
                                │
@@ -54,14 +57,17 @@ synthetic data and pushes it directly into external systems through authenticate
 │                      External Systems                            │
 │                                                                  │
 │  ITSM                          Observability                     │
-│  └─ ServiceNow (Table API)     ├─ Elasticsearch (Bulk API)       │
-│                                └─ Prometheus (Pushgateway)       │
-│  Streaming                     Databases                         │
-│  └─ Apache Kafka               ├─ PostgreSQL                     │
-│                                └─ MongoDB (insert_many)          │
-│  Cloud                                                           │
-│  ├─ AWS DynamoDB                                                 │
-│  └─ AWS S3                                                       │
+│  └─ ServiceNow (Table API)     ├─ Cribl Stream (HEC)            │
+│                                ├─ Elasticsearch (Bulk API)       │
+│  Big Data                      ├─ Grafana Loki (Push API)        │
+│  ├─ Apache Kafka               ├─ Prometheus (Remote Write)      │
+│  └─ Trino (DBAPI)             └─ VictoriaMetrics (Import API)   │
+│                                                                  │
+│  Databases                     Cloud                             │
+│  ├─ ClickHouse (HTTP)          ├─ AWS DynamoDB                   │
+│  ├─ MongoDB (insert_many)      ├─ AWS Kinesis                    │
+│  ├─ PostgreSQL (SQL)           ├─ AWS S3                         │
+│  └─ Redis (hash/string/list)   └─ AWS SQS                       │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -80,11 +86,13 @@ synthetic data and pushes it directly into external systems through authenticate
 **Pages:**
 
 - **Dashboard** — 8 metrics (schemas, connections, active connections, jobs, records, success rate, failed, API uptime), schema category breakdown, connections panel, connector grid, recent schemas, recent activity feed
-- **Schema Studio** — browse, create, load from file, and inspect 54 built-in JSON schemas across 13 categories with field-level detail and category filter tabs
+- **Schema Studio** — browse, create, load from file, and inspect 54 built-in JSON schemas (alphabetically sorted) across 13 categories with field-level detail and category filter tabs
 - **Connections** — configure and test target connections with auth credentials, status indicator; persisted in PostgreSQL
 - **Generate & Push** — select schema + connection, set record count, edge-case toggle, preview with copy/download, or run a job
 - **Job Monitor** — real-time job table with status, progress, and duration; job history persisted in PostgreSQL
-- **Connector Catalog** — alphabetically sorted reference of all 8 supported push targets grouped by category
+- **Connector Catalog** — alphabetically sorted reference of all 16 supported push targets grouped by category
+- **User Management** — admin-only page for creating and deleting user accounts with role assignment
+- **Authentication** — login overlay with session persistence (localStorage), role-based UI (admin vs regular user)
 - **Theme** — Light / Dark mode toggle in sidebar footer, persisted to localStorage
 
 ### 2. API Server
@@ -112,6 +120,10 @@ synthetic data and pushes it directly into external systems through authenticate
 | POST   | `/api/jobs`                 | Create and run a generation job      |
 | GET    | `/api/jobs`                 | List jobs                            |
 | GET    | `/api/connectors`           | List available connector types       |
+| POST   | `/api/auth/login`           | Authenticate user (returns token)    |
+| GET    | `/api/auth/users`           | List all users (admin)               |
+| POST   | `/api/auth/users`           | Create a user (admin)                |
+| DELETE | `/api/auth/users/{id}`      | Delete a user (admin)                |
 | WS     | `/ws`                       | Real-time job progress updates       |
 
 ### 3. Schema Engine
@@ -148,20 +160,29 @@ The database module (`datagen/db/database.py`) provides:
 - **Async connection pooling** via `psycopg3` + `AsyncConnectionPool`
 - **Auto-migration** — tables auto-created on startup
 - **JSONB columns** — schema_def, credentials, options, errors
-- **Tables**: `schemas`, `connections`, `jobs`
+- **Tables**: `schemas`, `connections`, `jobs`, `users`
+- **Default users** — `admin`/`admin123` (admin) and `user`/`user123` (regular) seeded on startup
 
-### 6. Supported Push Targets (8)
+### 6. Supported Push Targets (16)
 
 | Category       | Target           | Protocol              | Batch Size |
 |----------------|------------------|-----------------------|------------|
+| Cloud          | AWS DynamoDB     | batch_write_item      | 25         |
+| Cloud          | AWS Kinesis      | put_records           | 500        |
+| Cloud          | AWS S3           | put_object            | 1 per file |
+| Cloud          | AWS SQS          | send_message_batch    | 10         |
+| Database       | ClickHouse       | HTTP JSONEachRow      | all at once|
+| Database       | MongoDB          | insert_many           | all at once|
+| Database       | PostgreSQL       | SQL                   | all at once|
+| Database       | Redis            | pipeline (hash/list)  | all at once|
+| Big Data       | Apache Kafka     | Kafka protocol        | per record |
+| Big Data       | Trino            | DBAPI INSERT          | per record |
 | ITSM           | ServiceNow       | REST (Table API)      | per record |
+| Observability  | Cribl Stream     | HEC / REST            | all at once|
 | Observability  | Elasticsearch    | Bulk API              | all at once|
-| Observability  | Prometheus       | Pushgateway           | all at once|
-| Streaming      | Kafka            | Kafka protocol        | per record |
-| Databases      | PostgreSQL       | SQL                   | all at once|
-| Databases      | MongoDB          | insert_many           | all at once|
-| Cloud Storage  | AWS DynamoDB     | batch_write_item      | 25         |
-| Cloud Storage  | AWS S3           | put_object            | 1 per file |
+| Observability  | Grafana Loki     | Push API              | all at once|
+| Observability  | Prometheus       | Remote Write          | all at once|
+| Observability  | VictoriaMetrics  | Import / Write API    | all at once|
 
 ---
 
@@ -175,17 +196,25 @@ genforge/
 │   │   ├── generators.py
 │   │   ├── timeseries.py
 │   │   └── pipeline.py
-│   ├── connectors/           # Connector SDK & implementations
+│   ├── connectors/           # Connector SDK & 16 implementations
 │   │   ├── base.py           # Abstract connector interface
 │   │   ├── registry.py       # Plugin discovery & registration
-│   │   ├── servicenow.py
-│   │   ├── kafka.py
-│   │   ├── elasticsearch.py
-│   │   ├── mongodb.py
-│   │   ├── prometheus.py
-│   │   ├── aws_s3.py
-│   │   ├── aws_dynamodb.py
-│   │   └── ...
+│   │   ├── aws_dynamodb.py   # AWS DynamoDB
+│   │   ├── aws_kinesis.py    # AWS Kinesis
+│   │   ├── aws_s3.py         # AWS S3
+│   │   ├── aws_sqs.py        # AWS SQS
+│   │   ├── clickhouse.py     # ClickHouse
+│   │   ├── cribl.py          # Cribl Stream
+│   │   ├── elasticsearch.py  # Elasticsearch / OpenSearch
+│   │   ├── grafana_loki.py   # Grafana Loki
+│   │   ├── kafka.py          # Apache Kafka
+│   │   ├── mongodb.py        # MongoDB
+│   │   ├── postgres.py       # PostgreSQL
+│   │   ├── prometheus.py     # Prometheus
+│   │   ├── redis_connector.py# Redis
+│   │   ├── servicenow.py     # ServiceNow
+│   │   ├── trino.py          # Trino
+│   │   └── victoriametrics.py# VictoriaMetrics
 │   ├── db/                   # PostgreSQL persistence layer
 │   │   ├── __init__.py
 │   │   └── database.py       # Async CRUD, connection pool, DDL

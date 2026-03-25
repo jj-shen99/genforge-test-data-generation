@@ -72,6 +72,50 @@ def _new_id() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Authentication endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/api/auth/login")
+async def login(body: dict):
+    username = body.get("username", "")
+    password = body.get("password", "")
+    if not username or not password:
+        raise HTTPException(400, "Username and password required")
+    user = await db.authenticate_user(username, password)
+    if not user:
+        raise HTTPException(401, "Invalid username or password")
+    return {"user": user, "token": f"{user['id']}:{user['role']}"}
+
+
+@app.get("/api/auth/users")
+async def list_users_endpoint():
+    users = await db.list_users()
+    return {"users": users}
+
+
+@app.post("/api/auth/users")
+async def create_user_endpoint(body: dict):
+    username = body.get("username", "")
+    password = body.get("password", "")
+    role = body.get("role", "user")
+    display_name = body.get("display_name", "")
+    if not username or not password:
+        raise HTTPException(400, "Username and password required")
+    if role not in ("admin", "user"):
+        raise HTTPException(400, "Role must be 'admin' or 'user'")
+    user = await db.create_user(username, password, role, display_name)
+    return user
+
+
+@app.delete("/api/auth/users/{user_id}")
+async def delete_user_endpoint(user_id: str):
+    deleted = await db.delete_user(user_id)
+    if not deleted:
+        raise HTTPException(404, "User not found")
+    return {"deleted": True}
+
+
+# ---------------------------------------------------------------------------
 # Health
 # ---------------------------------------------------------------------------
 
@@ -430,6 +474,9 @@ async def startup():
 
     # Initialize PostgreSQL connection pool and create tables
     await db.init_pool()
+
+    # Seed default users (admin/admin123, user/user123)
+    await db.seed_default_users()
 
     # Load example schemas from configs/schemas/ if they exist
     existing = await db.list_schemas()

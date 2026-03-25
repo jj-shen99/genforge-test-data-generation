@@ -114,9 +114,19 @@ CREATE TABLE IF NOT EXISTS jobs (
     duration_seconds REAL
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    id          TEXT PRIMARY KEY,
+    username    TEXT UNIQUE NOT NULL,
+    password    TEXT NOT NULL,
+    role        TEXT NOT NULL DEFAULT 'user',
+    display_name TEXT NOT NULL DEFAULT '',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_schemas_category ON schemas(category);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_started ON jobs(started_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
 """
 
 
@@ -393,6 +403,70 @@ async def get_stats() -> dict:
         "completed_jobs": comp["c"],
         "failed_jobs": fail["c"],
     }
+
+
+# ---------------------------------------------------------------------------
+# Users CRUD
+# ---------------------------------------------------------------------------
+
+async def create_user(
+    username: str,
+    password: str,
+    role: str = "user",
+    display_name: str = "",
+) -> dict:
+    import hashlib
+    uid = _new_id()
+    now = _now()
+    pw_hash = hashlib.sha256(password.encode()).hexdigest()
+    async with _pool.connection() as conn:
+        await conn.execute(
+            """INSERT INTO users (id, username, password, role, display_name, created_at)
+               VALUES (%s, %s, %s, %s, %s, %s)
+               ON CONFLICT (username) DO NOTHING""",
+            (uid, username, pw_hash, role, display_name or username, now),
+        )
+        await conn.commit()
+    return {"id": uid, "username": username, "role": role,
+            "display_name": display_name or username, "created_at": now}
+
+
+async def authenticate_user(username: str, password: str) -> dict | None:
+    import hashlib
+    pw_hash = hashlib.sha256(password.encode()).hexdigest()
+    async with _pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT * FROM users WHERE username = %s AND password = %s",
+            (username, pw_hash),
+        )
+        r = await cur.fetchone()
+    if not r:
+        return None
+    return {
+        "id": r["id"], "username": r["username"], "role": r["role"],
+        "display_name": r["display_name"], "created_at": _ts(r["created_at"]),
+    }
+
+
+async def list_users() -> list[dict]:
+    async with _pool.connection() as conn:
+        cur = await conn.execute("SELECT id, username, role, display_name, created_at FROM users ORDER BY username")
+        rows = await cur.fetchall()
+    return [{"id": r["id"], "username": r["username"], "role": r["role"],
+             "display_name": r["display_name"], "created_at": _ts(r["created_at"])} for r in rows]
+
+
+async def delete_user(user_id: str) -> bool:
+    async with _pool.connection() as conn:
+        cur = await conn.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        await conn.commit()
+        return cur.rowcount > 0
+
+
+async def seed_default_users() -> None:
+    """Create default admin and user accounts if they don't exist."""
+    await create_user("admin", "admin123", role="admin", display_name="Administrator")
+    await create_user("user", "user123", role="user", display_name="Regular User")
 
 
 # ---------------------------------------------------------------------------

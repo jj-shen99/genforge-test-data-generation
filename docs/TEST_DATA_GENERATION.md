@@ -2,7 +2,7 @@
 
 ## Overview
 
-**GenForge** is a full-stack test data generation framework that enables users to generate realistic, schema-driven synthetic data and push it directly to external systems. It features a FastAPI backend with PostgreSQL persistence, a web dashboard SPA, and 54 built-in schema templates across 13 categories.
+**GenForge** is a full-stack test data generation framework that enables users to generate realistic, schema-driven synthetic data and push it directly to external systems. It features a FastAPI backend with PostgreSQL persistence, a web dashboard SPA with user authentication, 54 built-in schema templates across 13 categories, and 16 push connectors.
 
 ---
 
@@ -14,9 +14,10 @@
 4. [Schema Specification](#schema-specification)
 5. [Template Library](#template-library)
 6. [Push to Instance](#push-to-instance)
-7. [User Guide](#user-guide)
-8. [API Reference](#api-reference)
-9. [Backend Dependencies](#backend-dependencies)
+7. [User Authentication](#user-authentication)
+8. [User Guide](#user-guide)
+9. [API Reference](#api-reference)
+10. [Backend Dependencies](#backend-dependencies)
 
 ---
 
@@ -37,8 +38,9 @@
 │           ▼                   ▼                          ▼              │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │                   Push to Instance Panel                        │   │
-│  │  Connections → Backend API → ServiceNow, Elasticsearch,         │   │
-│  │  Kafka, MongoDB, PostgreSQL, Prometheus, AWS S3, AWS DynamoDB   │   │
+│  │  Connections → Backend API → 16 connectors (ServiceNow,         │   │
+│  │  Elasticsearch, Kafka, MongoDB, ClickHouse, Redis, Cribl,       │   │
+│  │  Grafana Loki, Prometheus, VictoriaMetrics, Trino, AWS …)       │   │
 │  └──────────────────────────┬──────────────────────────────────────┘   │
 │                 http://localhost:3880                                    │
 └──────────────────────────────┼──────────────────────────────────────────┘
@@ -49,25 +51,29 @@
 │                    http://localhost:3800                                  │
 │                                                                          │
 │  ┌──────────────────────┐   ┌──────────────────────────────────────┐    │
-│  │ Schema Engine         │   │ Connector Layer                      │    │
-│  │  SchemaParser         │   │  ServiceNow · Elasticsearch · Kafka  │    │
-│  │  generators.py        │   │  MongoDB · PostgreSQL · Prometheus   │    │
-│  │  timeseries.py        │   │  AWS S3 · AWS DynamoDB              │    │
-│  │  pipeline.py          │   │  Auth · Batch · Retry               │    │
-│  └──────────────────────┘   └──────────────────────────────────────┘    │
+│  │ Schema Engine         │   │ Connector Layer (16 connectors)      │    │
+│  │  SchemaParser         │   │  Cloud: DynamoDB, Kinesis, S3, SQS   │    │
+│  │  generators.py        │   │  DB: ClickHouse, Mongo, PG, Redis    │    │
+│  │  timeseries.py        │   │  BigData: Kafka, Trino               │    │
+│  │  pipeline.py          │   │  Obs: Cribl, ES, Loki, Prom, VM     │    │
+│  └──────────────────────┘   │  ITSM: ServiceNow                    │    │
+│                              └──────────────────────────────────────┘    │
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │ PostgreSQL Database (psycopg3 async + connection pool)           │   │
-│  │  schemas · connections · jobs                                    │   │
+│  │  schemas · connections · jobs · users                            │   │
 │  │  postgresql://genforge:genforge@localhost:5432/genforge          │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────────┘
                                │
                                ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                     External Systems                                     │
-│  ServiceNow · Elasticsearch · Kafka · MongoDB · Prometheus              │
-│  AWS DynamoDB · AWS S3 · PostgreSQL                                     │
+│                     External Systems (16 targets)                        │
+│  Cloud: AWS DynamoDB · AWS Kinesis · AWS S3 · AWS SQS                   │
+│  Database: ClickHouse · MongoDB · PostgreSQL · Redis                     │
+│  Big Data: Apache Kafka · Trino                                          │
+│  ITSM: ServiceNow                                                        │
+│  Observability: Cribl · Elasticsearch · Grafana Loki · Prometheus · VM  │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -107,8 +113,9 @@
 - **54 built-in templates** — Pre-configured schemas across 13 categories covering datacenter, cloud, ITSM, observability, databases, CI/CD, security, networking, and more.
 - **File upload** — Import schemas from `.json` files via file picker.
 - **Copy & download** — One-click copy to clipboard or download as JSON file.
-- **Push to 8 external systems** — Direct data ingestion via authenticated connectors, all routed through the backend API (no CORS issues).
-- **PostgreSQL persistence** — Schemas, connections, and jobs persist across server restarts.
+- **Push to 16 external systems** — Direct data ingestion via authenticated connectors, all routed through the backend API (no CORS issues).
+- **PostgreSQL persistence** — Schemas, connections, jobs, and users persist across server restarts.
+- **User authentication** — Login page with admin and regular user roles; role-based UI controls.
 - **Real-time WebSocket updates** — Job progress broadcast to connected dashboard clients.
 
 ---
@@ -128,6 +135,7 @@ GenForge uses **PostgreSQL** for persistent metadata storage. The database modul
 | `schemas` | Template definitions | id, name, schema_def (JSONB), category, tags |
 | `connections` | Connector configurations | id, name, connector_type, host, credentials (JSONB) |
 | `jobs` | Push job history | id, schema_id, connection_id, status, records_sent, errors |
+| `users` | User accounts | id, username, password (SHA-256), role, display_name |
 
 ### Configuration
 
@@ -184,23 +192,82 @@ Schemas follow JSON Schema format with GenForge extensions.
 
 The dashboard ships with **54 pre-built templates** organized into **13 categories**.
 
-### Category Index
+### Complete Template List (alphabetically sorted)
 
-| Category | Count | Templates |
-|---|---|---|
-| **servicenow** | 6 | Incident, Change Request, CMDB CI, Problem, Service Request, Knowledge Article |
-| **observability** | 5 | VictoriaMetrics Time Series, Elasticsearch Log Entry, Cribl Syslog, Grafana Loki Log Stream, OpenTelemetry Span, Prometheus Alert Record |
-| **database** | 5 | MongoDB User Profile, PostgreSQL Slow Query, ClickHouse Web Analytics, Redis Cache Operation, MongoDB Aggregation Pipeline |
-| **cloud** | 6 | AWS CloudWatch Metrics, AWS S3 Access Log, AWS Lambda Invocation, AWS ECS Task Event, GCP Compute Instance, Cloud Cost & Billing |
-| **bigdata** | 3 | Kafka User Activity Events, Trino Query Log, Spark Job Metrics |
-| **cicd** | 3 | GitHub Actions Workflow Run, Jenkins Build Record, ArgoCD Sync Event |
-| **infra** | 4 | Kubernetes Pod Event, Terraform State Resource, Docker Container Event, VMware vSphere VM Event |
-| **security** | 3 | Security Audit Event, Network Flow Record, SIEM Alert |
-| **datacenter** | 7 | Server CPU & Memory Metrics, Disk I/O & Storage, IPMI Sensor Reading, Rack Power & Cooling, Process List (ps), Network Connections (netstat/ss), System Load & Uptime |
-| **networking** | 3 | DNS Query Log, Firewall Rule Log, SNMP Trap Event |
-| **messaging** | 2 | Slack Audit Event, Email Gateway Log |
-| **analytics** | 3 | Product Analytics Event, A/B Test Result, Data Pipeline Run |
-| **devops** | 2 | Incident Response Record, SLO Performance Report |
+| # | Schema Name | Category |
+|---|-------------|----------|
+| 1 | A/B Test Result | analytics |
+| 2 | ArgoCD Sync Event | cicd |
+| 3 | AWS CloudWatch Metrics | cloud |
+| 4 | AWS ECS Task Event | cloud |
+| 5 | AWS Lambda Invocation | cloud |
+| 6 | AWS S3 Access Log | cloud |
+| 7 | Azure Resource Event | cloud |
+| 8 | ClickHouse Web Analytics | database |
+| 9 | Cloud Cost & Billing Record | cloud |
+| 10 | Cribl Syslog Events | observability |
+| 11 | Data Pipeline Run | analytics |
+| 12 | Disk I/O & Storage Metrics | datacenter |
+| 13 | DNS Query Log | networking |
+| 14 | Docker Container Event | infra |
+| 15 | Elasticsearch Log Entry | observability |
+| 16 | Email Gateway Log | messaging |
+| 17 | Firewall Rule Log | networking |
+| 18 | GCP Compute Instance Event | cloud |
+| 19 | GitHub Actions Workflow Run | cicd |
+| 20 | Grafana Loki Log Stream | observability |
+| 21 | Incident Response Record | devops |
+| 22 | IPMI Sensor Reading | datacenter |
+| 23 | Jenkins Build Record | cicd |
+| 24 | Kafka User Activity Events | bigdata |
+| 25 | Kubernetes Pod Event | infra |
+| 26 | MongoDB Aggregation Pipeline | database |
+| 27 | MongoDB User Profile | database |
+| 28 | Network Connections (netstat/ss) | datacenter |
+| 29 | Network Flow Record | security |
+| 30 | OpenTelemetry Span | observability |
+| 31 | PostgreSQL Slow Query Log | database |
+| 32 | Process List (ps) | datacenter |
+| 33 | Product Analytics Event | analytics |
+| 34 | Prometheus Alert Record | observability |
+| 35 | Rack Power & Cooling | datacenter |
+| 36 | Redis Cache Operation | database |
+| 37 | Security Audit Event | security |
+| 38 | Server CPU & Memory Metrics | datacenter |
+| 39 | ServiceNow Change Request | servicenow |
+| 40 | ServiceNow CMDB CI | servicenow |
+| 41 | ServiceNow Incident | servicenow |
+| 42 | ServiceNow Knowledge Article | servicenow |
+| 43 | ServiceNow Problem | servicenow |
+| 44 | ServiceNow Service Request | servicenow |
+| 45 | SIEM Alert | security |
+| 46 | Slack Audit Event | messaging |
+| 47 | SLO Performance Report | devops |
+| 48 | SNMP Trap Event | networking |
+| 49 | Spark Job Metrics | bigdata |
+| 50 | System Load & Uptime | datacenter |
+| 51 | Terraform State Resource | infra |
+| 52 | Trino Query Log | bigdata |
+| 53 | VictoriaMetrics Time Series | observability |
+| 54 | VMware vSphere VM Event | infra |
+
+### Category Summary
+
+| Category | Count |
+|---|---|
+| analytics | 3 |
+| bigdata | 3 |
+| cicd | 3 |
+| cloud | 6 |
+| datacenter | 7 |
+| database | 5 |
+| devops | 2 |
+| infra | 4 |
+| messaging | 2 |
+| networking | 3 |
+| observability | 6 |
+| security | 3 |
+| servicenow | 6 |
 
 ---
 
@@ -218,18 +285,26 @@ The **Push to Instance** feature allows generated data to be sent directly to ex
 4. Backend generates records using SchemaParser, pushes via the appropriate connector
 5. Job result (records sent, failed, errors) is persisted in PostgreSQL
 
-### Supported Connectors
+### Supported Connectors (16)
 
 | Connector | Protocol | Python Package |
 |---|---|---|
-| **ServiceNow** | REST Table API | `httpx` |
-| **Elasticsearch** | Bulk API | `elasticsearch` |
+| **AWS DynamoDB** | batch_write_item | `boto3` |
+| **AWS Kinesis** | put_records | `boto3` |
+| **AWS S3** | put_object | `boto3` |
+| **AWS SQS** | send_message_batch | `boto3` |
+| **ClickHouse** | HTTP JSONEachRow | `httpx` |
+| **Cribl Stream** | HEC / REST | `httpx` |
+| **Elasticsearch** | Bulk API | `httpx` |
+| **Grafana Loki** | Push API | `httpx` |
 | **Apache Kafka** | Kafka protocol | `confluent-kafka` |
 | **MongoDB** | Wire protocol | `pymongo` |
 | **PostgreSQL** | SQL | `psycopg` |
-| **Prometheus** | Pushgateway | `prometheus_client` |
-| **AWS DynamoDB** | AWS SDK | `boto3` |
-| **AWS S3** | AWS SDK | `boto3` |
+| **Prometheus** | Remote Write | `prometheus_client` |
+| **Redis** | Pipeline (hash/string/list) | `redis` |
+| **ServiceNow** | REST Table API | `httpx` |
+| **Trino** | DBAPI INSERT | `trino` |
+| **VictoriaMetrics** | Import / Write API | `httpx` |
 
 ---
 
@@ -266,12 +341,41 @@ The **Push to Instance** feature allows generated data to be sent directly to ex
 
 ---
 
+## User Authentication
+
+GenForge includes role-based user authentication:
+
+| Role | Permissions |
+|---|---|
+| **admin** | Full access: create/edit/delete schemas, connections, users; push data; test connections |
+| **user** | Read access: view schemas, connections, connector catalog; generate previews only |
+
+**Default accounts** (seeded on first startup):
+
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `admin123` | admin |
+| `user` | `user123` | user |
+
+Passwords are stored as SHA-256 hashes. Sessions are persisted to `localStorage` on the client.
+
+---
+
 ## API Reference
 
 ### Health Check
 
 ```
 GET /api/health
+```
+
+### Authentication
+
+```
+POST   /api/auth/login           # Login (returns user + token)
+GET    /api/auth/users            # List all users
+POST   /api/auth/users            # Create a user
+DELETE /api/auth/users/{id}       # Delete a user
 ```
 
 ### Schemas
@@ -343,7 +447,8 @@ pip install elasticsearch       # Elasticsearch
 pip install pymongo             # MongoDB
 pip install confluent-kafka     # Kafka
 pip install redis               # Redis
-pip install boto3               # AWS (DynamoDB, S3)
+pip install trino               # Trino
+pip install boto3               # AWS (DynamoDB, S3, SQS, Kinesis)
 pip install prometheus_client   # Prometheus Pushgateway
 ```
 
@@ -366,8 +471,16 @@ pip install -e ".[all]"
 | `datagen/models/models.py` | Pydantic request/response models |
 | `datagen/engine/schema_parser.py` | JSON Schema parser with x-datagen extensions |
 | `datagen/engine/generators.py` | Data generation primitives (Faker + custom) |
-| `datagen/connectors/servicenow.py` | ServiceNow connector (Table API, Import Set, Events) |
 | `datagen/connectors/base.py` | Abstract connector interface |
-| `datagen/connectors/registry.py` | Plugin discovery & registration |
+| `datagen/connectors/registry.py` | Plugin discovery & registration (16 connectors) |
+| `datagen/connectors/servicenow.py` | ServiceNow connector (Table API, Import Set, Events) |
+| `datagen/connectors/elasticsearch.py` | Elasticsearch / OpenSearch connector (Bulk API) |
+| `datagen/connectors/kafka.py` | Apache Kafka connector (confluent-kafka) |
+| `datagen/connectors/cribl.py` | Cribl Stream connector (HEC / REST) |
+| `datagen/connectors/grafana_loki.py` | Grafana Loki connector (Push API) |
+| `datagen/connectors/clickhouse.py` | ClickHouse connector (HTTP JSONEachRow) |
+| `datagen/connectors/redis_connector.py` | Redis connector (hash/string/list) |
+| `datagen/connectors/trino.py` | Trino connector (DBAPI) |
+| `datagen/connectors/victoriametrics.py` | VictoriaMetrics connector (Import/Write API) |
 | `dashboard/index.html` | Web dashboard SPA (54 templates, light/dark theme) |
 | `.env.example` | Database connection string configuration |

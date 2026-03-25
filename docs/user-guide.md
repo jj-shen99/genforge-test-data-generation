@@ -94,11 +94,12 @@ The landing page shows a comprehensive summary of your workspace:
 - **API uptime** — live uptime from the `/api/health` endpoint
 - **Schema categories** — visual breakdown by 13 categories (servicenow, observability, database, cloud, bigdata, cicd, infra, security, datacenter, networking, messaging, analytics, devops)
 - **Connections panel** — quick-view of recent connections with status
-- **Available connectors** — grid of all 8 supported push targets
-- **Recent schemas** — table listing schemas with category and field count
+- **Available connectors** — grid of all 16 supported push targets
+- **Recent schemas** — table listing schemas alphabetically with category and field count
 - **Recent activity** — latest jobs with status and record counts
 - **API Health** — live indicator in sidebar showing API server status (polls every 30s)
 - **Theme toggle** — switch between Light and Dark mode (persisted to localStorage)
+- **User badge** — shows logged-in user and role in sidebar footer; click to sign out
 
 ### Schema Studio
 
@@ -165,7 +166,26 @@ View all generation jobs with real-time status.
 
 ### Connector Catalog
 
-Reference page listing all 8 supported connectors, alphabetically sorted and grouped by category, with type identifiers and supported auth methods.
+Reference page listing all 16 supported connectors, alphabetically sorted and grouped by category, with type identifiers and supported auth methods.
+
+### User Management (Admin only)
+
+Admin users can access the **User Management** page from the sidebar:
+
+1. View all user accounts with username, display name, role, and creation date
+2. Click **+ New User** to create accounts with username, password, display name, and role
+3. Delete non-admin users
+4. Role permissions are displayed at the bottom of the page
+
+### Authentication
+
+GenForge requires login to access the dashboard:
+
+- **Default accounts**: `admin`/`admin123` (full access) and `user`/`user123` (read-only)
+- Sessions are persisted to `localStorage` — you stay logged in across page reloads
+- Click the user badge in the sidebar footer to sign out
+- **Admin role**: create/edit/delete schemas, connections, users; push data; test connections
+- **User role**: view schemas, connections, connector catalog; generate previews only
 
 ---
 
@@ -361,12 +381,33 @@ Schemas follow JSON Schema with GenForge-specific extensions.
 | Host         | HEC endpoint URL                            |
 | Auth method  | `bearer_token`, `api_key`                   |
 
-### AWS Services (DynamoDB, S3, SQS, Kinesis)
+### AWS DynamoDB
 
 | Field        | Description                                 |
 |--------------|---------------------------------------------|
 | Auth method  | `aws_iam` or `api_key`                      |
-| Options      | Target-specific: `table`, `bucket`, `queue_url`, `stream_name` |
+| Options      | `{"table": "my-table"}` — target table name  |
+
+### AWS Kinesis
+
+| Field        | Description                                 |
+|--------------|---------------------------------------------|
+| Auth method  | `aws_iam` or `api_key`                      |
+| Options      | `{"stream_name": "my-stream", "partition_key_field": "id"}` |
+
+### AWS S3
+
+| Field        | Description                                 |
+|--------------|---------------------------------------------|
+| Auth method  | `aws_iam` or `api_key`                      |
+| Options      | `{"bucket": "my-bucket", "prefix": "data/", "format": "jsonl"}` |
+
+### AWS SQS
+
+| Field        | Description                                 |
+|--------------|---------------------------------------------|
+| Auth method  | `aws_iam` or `api_key`                      |
+| Options      | `{"queue_url": "https://sqs.us-east-1.amazonaws.com/123/my-queue"}` |
 
 ### ClickHouse
 
@@ -395,14 +436,13 @@ Schemas follow JSON Schema with GenForge-specific extensions.
 | Auth method  | `basic`, `certificate`                      |
 | Options      | `{"catalog": "hive", "schema": "default", "table": "events"}` |
 
-### Prometheus (Pushgateway)
+### VictoriaMetrics
 
 | Field        | Description                                 |
 |--------------|---------------------------------------------|
-| Host         | Pushgateway URL, e.g., `localhost`          |
-| Port         | 9091                                        |
-| Auth method  | `basic`, `bearer_token`                     |
-| Options      | `{"job": "genforge-metrics"}`               |
+| Host         | Server URL, e.g., `localhost`               |
+| Port         | 8428                                        |
+| Auth method  | `bearer_token`, `basic`                     |
 
 ---
 
@@ -416,6 +456,9 @@ Schemas follow JSON Schema with GenForge-specific extensions.
 | Connection test fails | Verify host, port, and credentials; check network access |
 | WebSocket not connecting | Use `ws://localhost:3800/ws` — ensure CORS is allowed |
 | `psycopg.OperationalError` | Ensure PostgreSQL is running: `brew services start postgresql@16` |
-| `httpx not installed` error on push | Run `pip install httpx` (required for ServiceNow connector) |
+| `httpx not installed` error on push | Run `pip install httpx` (required for ServiceNow, Cribl, ClickHouse, Loki, VictoriaMetrics connectors) |
+| `trino not installed` | Run `pip install trino` |
+| `redis not installed` | Run `pip install redis` |
 | ServiceNow 403 Business Rule error | Use valid initial states only (e.g., state `-5` for Change Requests) |
 | ServiceNow 403 Data Policy error | Include mandatory fields like `close_code` and `close_notes` for resolved/closed states |
+| Login fails with 401 | Verify username and password; default: `admin`/`admin123` or `user`/`user123` |
