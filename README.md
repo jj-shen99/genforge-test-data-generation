@@ -4,7 +4,7 @@ A unified, self-service platform for generating realistic, schema-driven synthet
 and pushing it directly into external systems through authenticated connectors.
 All metadata (schemas, connections, jobs, users) is persisted in **PostgreSQL**.
 
-**60 built-in schema templates** across **14 categories** · **16 push connectors** · **Weighted enum randomization** · **User authentication** · **PostgreSQL persistence** · **Light / Dark theme** · **Real-time API health** · **Configurable preview** · **Edge-case data generation**
+**60 built-in schema templates** across **14 categories** · **16 push connectors** · **Weighted enum randomization** · **User authentication & registration** · **Forgot password** · **ML schema analysis** · **PostgreSQL persistence** · **Light / Dark theme** · **Real-time API health** · **Configurable preview** · **Edge-case data generation**
 
 ## Quick Start
 
@@ -88,7 +88,8 @@ test-data-generation-ai/
 │   ├── test_engine.py             # Engine & pipeline tests
 │   ├── test_connectors.py         # Connector registry, base class, auth provider tests
 │   ├── test_models.py             # Pydantic API model tests
-│   └── test_edge_cases.py         # Edge-case & boundary value tests
+│   ├── test_edge_cases.py         # Edge-case & boundary value tests
+│   └── test_property_based.py     # Hypothesis property-based tests
 ├── .env.example                   # Database connection string config
 ├── requirements.txt
 ├── setup.py
@@ -101,8 +102,9 @@ test-data-generation-ai/
 ┌──────────────────────────────────────────────────────────────┐
 │                    Web Dashboard (SPA)                        │
 │       Schema Studio · Connections · Generate & Push          │
-│   Connector Catalog · User Management · Light/Dark Theme     │
-│   Login · Role-Based Access · API Health · Edge-Case Toggle  │
+│   Connector Catalog · ML Analysis · User Management          │
+│   Login · Register · Forgot Password · Light/Dark Theme      │
+│   Role-Based Access · API Health · Edge-Case Toggle          │
 │                    http://localhost:3880                      │
 └────────────────────────┬─────────────────────────────────────┘
                          │ REST + WebSocket
@@ -110,7 +112,8 @@ test-data-generation-ai/
 │                    API Server (FastAPI)                        │
 │               http://localhost:3800                            │
 │  /api/health · /api/schemas · /api/generate · /api/jobs      │
-│  /api/auth/login · /api/auth/users · /api/connections/test   │
+│  /api/auth/login · /api/auth/register · /api/auth/reset-password │
+│  /api/auth/users · /api/connections · /api/connections/test   │
 └────────────────────────┬─────────────────────────────────────┘
                          │
          ┌───────────────┼───────────────┐
@@ -244,11 +247,15 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 - **60 built-in schema templates** across 14 categories, alphabetically sorted with weighted randomization
 - **16 push connectors** — ServiceNow, Elasticsearch, Kafka, MongoDB, PostgreSQL, Prometheus, VictoriaMetrics, Cribl, Grafana Loki, ClickHouse, Redis, Trino, AWS DynamoDB, AWS S3, AWS SQS, AWS Kinesis
 - **User authentication** — login page, admin/user roles, session persistence, role-based UI
+- **User registration** — self-service account creation with email (optional), auto-login after signup
+- **Forgot password** — reset password by username or email from the login screen
 - **User management** — admin panel for creating and deleting users
+- **ML schema analysis** — portfolio quality scoring, per-schema field profiling, type distribution, actionable insights & recommendations
 - **PostgreSQL persistence** — schemas, connections, jobs, and users survive server restarts
 - **Light / Dark theme** — toggle in sidebar footer, persisted to localStorage
 - **Load schema from file** — import JSON Schema files (raw or wrapped format) via file picker
 - **Schema category filters** — filter by all 14 categories with color-coded tags
+- **Connection management** — create connections with host, auth, and options (JSON) for connector-specific config
 - **Connection testing** — real backend API health check via connector `validate_connection()`
 - **Edge-case toggle** — inject boundary values (empty strings, minimums, nulls) for testing
 - **Copy & Download** — preview JSON with one-click copy or download

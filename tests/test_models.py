@@ -98,7 +98,6 @@ class TestConnectionModels:
         assert req.auth_method == AuthMethodEnum.BASIC
         assert req.credentials == {}
         assert req.options == {}
-        assert req.environment == "development"
 
     def test_create_request_full(self):
         req = ConnectionCreateRequest(
@@ -107,7 +106,6 @@ class TestConnectionModels:
             auth_method=AuthMethodEnum.API_KEY,
             credentials={"key": "abc"},
             options={"topic": "events"},
-            environment="production",
         )
         assert req.port == 9092
         assert req.options["topic"] == "events"
@@ -120,7 +118,7 @@ class TestConnectionModels:
         resp = ConnectionResponse(
             id="c1", name="Test", connector_type="elasticsearch",
             host="localhost", port=9200, auth_method="basic",
-            options={}, environment="dev", created_at="2026-01-01",
+            options={}, created_at="2026-01-01",
         )
         assert resp.status == "unknown"
         assert resp.last_health_check is None

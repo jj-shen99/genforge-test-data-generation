@@ -44,7 +44,8 @@ html, body { height:100%; background:var(--bg-0); color:var(--tx-0); font-family
 /* Layout */
 .app { display:flex; height:100vh; }
 .sidebar { width:240px; background:var(--bg-1); border-right:1px solid var(--bd); display:flex; flex-direction:column; flex-shrink:0; }
-.sidebar-header { padding:20px 20px 16px; border-bottom:1px solid var(--bd); }
+.sidebar-header { padding:20px 20px 16px; border-bottom:1px solid var(--bd); background:linear-gradient(145deg, var(--accent-bg), var(--bg-1) 80%); position:relative; }
+.sidebar-header::after { content:''; position:absolute; bottom:0; left:20px; right:20px; height:2px; background:linear-gradient(90deg, var(--accent), transparent); border-radius:1px; }
 .sidebar-header h1 { font-size:28px; font-weight:600; letter-spacing:-0.3px; }
 .sidebar-header h1 span { color:var(--accent-tx); }
 .sidebar-header p { font-size:17px; color:var(--tx-2); margin-top:2px; }
@@ -163,6 +164,9 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 .gen-btn-generate { display:block; width:100%; padding:14px; border:none; border-radius:var(--radius-sm); font-size:18px; font-weight:600; font-family:var(--font); cursor:pointer; background:var(--green); color:#fff; transition:all .15s; margin-top:4px; }
 .gen-btn-generate:hover { filter:brightness(1.1); }
 .gen-btn-generate:disabled { opacity:0.5; cursor:not-allowed; filter:none; }
+.gen-btn-preview { display:block; padding:9px 14px; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer; background:var(--accent); color:#fff; transition:all .15s; margin-top:4px; flex:0 0 auto; min-width:106px; }
+.gen-btn-preview:hover { filter:brightness(1.1); }
+.gen-btn-preview:disabled { opacity:0.5; cursor:not-allowed; filter:none; }
 .gen-push-section { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:16px; }
 .gen-push-header { display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
 .gen-push-header h3 { font-size:17px; font-weight:500; display:flex; align-items:center; gap:8px; }
@@ -186,6 +190,28 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 .login-error { color:var(--red-tx); font-size:14px; margin-top:10px; min-height:20px; }
 .login-accounts { font-size:13px; color:var(--tx-2); margin-top:20px; padding-top:16px; border-top:1px solid var(--bd); text-align:left; }
 .login-accounts strong { color:var(--tx-1); }
+.auth-panel { display:none; }
+.auth-panel.active { display:block; }
+.auth-links { margin-top:14px; font-size:13px; color:var(--tx-2); }
+.auth-links a { color:var(--accent-tx); cursor:pointer; text-decoration:underline; }
+.auth-links a:hover { filter:brightness(1.2); }
+.auth-success { color:var(--green-tx); font-size:14px; margin-top:10px; min-height:20px; }
+
+/* ML Analysis page */
+.ml-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin-bottom:16px; }
+.ml-card { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:20px; transition:border-color .15s; }
+.ml-card:hover { border-color:var(--bd-h); }
+.ml-card-icon { font-size:28px; margin-bottom:8px; }
+.ml-card h4 { font-size:17px; font-weight:600; margin-bottom:4px; }
+.ml-card p { font-size:13px; color:var(--tx-2); line-height:1.5; }
+.ml-bar-track { height:8px; background:var(--bg-3); border-radius:4px; overflow:hidden; margin:4px 0; }
+.ml-bar-fill { height:100%; border-radius:4px; transition:width .4s ease; }
+.ml-stat-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--bd); font-size:14px; }
+.ml-stat-row:last-child { border-bottom:none; }
+.ml-stat-label { color:var(--tx-2); }
+.ml-stat-value { font-weight:600; font-family:var(--mono); font-size:13px; }
+.ml-insight { background:var(--accent-bg); border:1px solid var(--accent); border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:8px; font-size:14px; display:flex; align-items:flex-start; gap:10px; }
+.ml-insight .icon { font-size:18px; flex-shrink:0; }
 .user-badge { display:inline-flex; align-items:center; gap:6px; font-size:13px; padding:4px 10px; border-radius:20px; cursor:pointer; }
 .user-badge.admin { background:var(--amber-bg); color:var(--amber-tx); }
 .user-badge.user { background:var(--blue-bg); color:var(--blue-tx); }
@@ -225,6 +251,11 @@ tr:hover td { background:rgba(255,255,255,0.02); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
         Connector catalog
       </div>
+      <div class="nav-section">Intelligence</div>
+      <div class="nav-item" data-page="ml">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.1-.9 2-2 2h-4a2 2 0 01-2-2 4 4 0 014-4z"/><path d="M8 8v2a4 4 0 004 4 4 4 0 004-4V8"/><path d="M6 14a6 6 0 006 6 6 6 0 006-6"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+        ML analysis
+      </div>
       <div class="nav-item" data-page="users" id="nav-users" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         User management
@@ -259,21 +290,85 @@ tr:hover td { background:rgba(255,255,255,0.02); }
   <div class="login-card">
     <h1>Gen<span>Forge</span></h1>
     <div class="subtitle">Test Data Generation Platform</div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="login-username" placeholder="admin or user" autocomplete="username">
+
+    <!-- Sign In panel -->
+    <div class="auth-panel active" id="auth-login">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="admin or user" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-error" id="login-error"></div>
+      <div class="auth-links">
+        <a onclick="showAuthPanel('register')">Create an account</a> &middot;
+        <a onclick="showAuthPanel('forgot')">Forgot password?</a>
+      </div>
+      <div class="login-accounts">
+        <strong>Default accounts:</strong><br>
+        <span style="font-family:var(--mono)">admin</span> / <span style="font-family:var(--mono)">admin123</span> &mdash; Full access (admin)<br>
+        <span style="font-family:var(--mono)">user</span> / <span style="font-family:var(--mono)">user123</span> &mdash; Read-only access (regular)
+      </div>
     </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
+
+    <!-- Register panel -->
+    <div class="auth-panel" id="auth-register">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="reg-username" placeholder="Choose a username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Email <span style="font-size:11px;color:var(--tx-2)">(optional)</span></label>
+        <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Display Name <span style="font-size:11px;color:var(--tx-2)">(optional)</span></label>
+        <input type="text" id="reg-display-name" placeholder="Your display name">
+      </div>
+      <div class="form-group">
+        <label>Password <span style="font-size:11px;color:var(--tx-2)">(min 6 chars)</span></label>
+        <input type="password" id="reg-password" placeholder="Choose a password" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="reg-password-confirm" placeholder="Confirm password" autocomplete="new-password">
+      </div>
+      <button class="login-btn" id="reg-btn" onclick="doRegister()">Create Account</button>
+      <div class="login-error" id="reg-error"></div>
+      <div class="auth-success" id="reg-success"></div>
+      <div class="auth-links">
+        <a onclick="showAuthPanel('login')">Back to Sign In</a>
+      </div>
     </div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error"></div>
-    <div class="login-accounts">
-      <strong>Default accounts:</strong><br>
-      <span style="font-family:var(--mono)">admin</span> / <span style="font-family:var(--mono)">admin123</span> &mdash; Full access (admin)<br>
-      <span style="font-family:var(--mono)">user</span> / <span style="font-family:var(--mono)">user123</span> &mdash; Read-only access (regular)
+
+    <!-- Forgot Password panel -->
+    <div class="auth-panel" id="auth-forgot">
+      <div style="font-size:14px;color:var(--tx-2);margin-bottom:16px;text-align:left;">
+        Enter your username or email address to reset your password.
+      </div>
+      <div class="form-group">
+        <label>Username or Email</label>
+        <input type="text" id="forgot-identifier" placeholder="Username or email" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>New Password <span style="font-size:11px;color:var(--tx-2)">(min 6 chars)</span></label>
+        <input type="password" id="forgot-new-password" placeholder="Enter new password" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="forgot-confirm-password" placeholder="Confirm new password" autocomplete="new-password">
+      </div>
+      <button class="login-btn" id="forgot-btn" onclick="doResetPassword()">Reset Password</button>
+      <div class="login-error" id="forgot-error"></div>
+      <div class="auth-success" id="forgot-success"></div>
+      <div class="auth-links">
+        <a onclick="showAuthPanel('login')">Back to Sign In</a>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -334,10 +429,99 @@ async function doLogin() {
   }
 }
 
+function showAuthPanel(panel) {
+  document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('auth-' + panel);
+  if(el) el.classList.add('active');
+  // Clear errors/success on panel switch
+  document.querySelectorAll('.login-error, .auth-success').forEach(e => e.textContent = '');
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const displayName = document.getElementById('reg-display-name').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-password-confirm').value;
+  const errEl = document.getElementById('reg-error');
+  const successEl = document.getElementById('reg-success');
+  const btn = document.getElementById('reg-btn');
+  errEl.textContent = ''; successEl.textContent = '';
+  if(!username || !password) { errEl.textContent = 'Username and password are required'; return; }
+  if(password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+  if(password !== confirm) { errEl.textContent = 'Passwords do not match'; return; }
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    const resp = await fetch(`${API}/auth/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username, password, email, display_name: displayName})
+    });
+    if(!resp.ok) {
+      const err = await resp.json().catch(()=>({detail:'Registration failed'}));
+      throw new Error(err.detail || 'Registration failed');
+    }
+    const data = await resp.json();
+    successEl.textContent = 'Account created! Signing you in...';
+    // Auto-login after registration
+    state.auth = {...data.user, token: data.token};
+    localStorage.setItem('genforge-auth', JSON.stringify(state.auth));
+    setTimeout(() => {
+      document.getElementById('login-overlay').style.display = 'none';
+      updateAuthUI();
+      render();
+    }, 800);
+  } catch(e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Account';
+  }
+}
+
+async function doResetPassword() {
+  const identifier = document.getElementById('forgot-identifier').value.trim();
+  const newPassword = document.getElementById('forgot-new-password').value;
+  const confirm = document.getElementById('forgot-confirm-password').value;
+  const errEl = document.getElementById('forgot-error');
+  const successEl = document.getElementById('forgot-success');
+  const btn = document.getElementById('forgot-btn');
+  errEl.textContent = ''; successEl.textContent = '';
+  if(!identifier) { errEl.textContent = 'Username or email is required'; return; }
+  if(!newPassword) { errEl.textContent = 'New password is required'; return; }
+  if(newPassword.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+  if(newPassword !== confirm) { errEl.textContent = 'Passwords do not match'; return; }
+  btn.disabled = true; btn.textContent = 'Resetting...';
+  const isEmail = identifier.includes('@');
+  try {
+    const resp = await fetch(`${API}/auth/reset-password`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        username: isEmail ? '' : identifier,
+        email: isEmail ? identifier : '',
+        new_password: newPassword,
+      })
+    });
+    if(!resp.ok) {
+      const err = await resp.json().catch(()=>({detail:'Reset failed'}));
+      throw new Error(err.detail || 'Password reset failed');
+    }
+    const data = await resp.json();
+    successEl.textContent = `Password reset for "${data.username}". You can now sign in.`;
+    document.getElementById('forgot-identifier').value = '';
+    document.getElementById('forgot-new-password').value = '';
+    document.getElementById('forgot-confirm-password').value = '';
+    setTimeout(() => showAuthPanel('login'), 2000);
+  } catch(e) {
+    errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Reset Password';
+  }
+}
+
 function doLogout() {
   state.auth = null;
   localStorage.removeItem('genforge-auth');
   document.getElementById('login-overlay').style.display = 'flex';
+  showAuthPanel('login');
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
   document.getElementById('login-error').textContent = '';
@@ -393,7 +577,7 @@ const DEMO_SCHEMAS = [
   {id:'s2',name:'ServiceNow Change Request',description:'Change management records for ITSM workflows',category:'servicenow',tags:['itsm','change'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-01-10T09:45:00Z',
    schema:{type:'object',properties:{number:{type:'string',pattern:'CHG[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},type:{type:'string',enum:['Normal','Standard','Emergency'],'x-datagen-weight':[50,35,15]},risk:{type:'string',enum:['High','Moderate','Low'],'x-datagen-weight':[15,50,35]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[-5,-4,-3,-2,-1,0,3],'x-datagen-weight':[15,10,20,10,15,20,10]},start_date:{type:'string',format:'date-time'},end_date:{type:'string',format:'date-time'},assigned_to:{type:'string','x-datagen-faker':'person.name'},cmdb_ci:{type:'string',format:'uuid'}}}},
   {id:'s3',name:'ServiceNow CMDB CI',description:'Configuration items for CMDB population',category:'servicenow',tags:['cmdb','ci'],created_at:'2025-12-01T10:00:00Z',updated_at:'2026-03-01T16:20:00Z',
-   schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},name:{type:'string','x-datagen-faker':'domainName'},sys_class_name:{type:'string',enum:['cmdb_ci_server','cmdb_ci_vm','cmdb_ci_app_server','cmdb_ci_database','cmdb_ci_netgear','cmdb_ci_service'],'x-datagen-weight':[25,30,15,15,5,10]},operational_status:{type:'integer',enum:[1,2,5,6],'x-datagen-weight':[60,20,10,10]},ip_address:{type:'string',format:'ipv4'},os:{type:'string',enum:['Linux','Windows Server 2022','RHEL 9','Ubuntu 22.04','VMware ESXi'],'x-datagen-weight':[30,20,20,20,10]},environment:{type:'string',enum:['Production','Staging','Development','DR'],'x-datagen-weight':[40,25,25,10]},manufacturer:{type:'string',enum:['Dell','HP','Lenovo','Cisco','VMware','AWS'],'x-datagen-weight':[25,25,15,15,10,10]},asset_tag:{type:'string',pattern:'ASSET[0-9]{6}'}}}}},
+   schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},name:{type:'string','x-datagen-faker':'domainName'},sys_class_name:{type:'string',enum:['cmdb_ci_server','cmdb_ci_vm','cmdb_ci_app_server','cmdb_ci_database','cmdb_ci_netgear','cmdb_ci_service'],'x-datagen-weight':[25,30,15,15,5,10]},operational_status:{type:'integer',enum:[1,2,5,6],'x-datagen-weight':[60,20,10,10]},ip_address:{type:'string',format:'ipv4'},os:{type:'string',enum:['Linux','Windows Server 2022','RHEL 9','Ubuntu 22.04','VMware ESXi'],'x-datagen-weight':[30,20,20,20,10]},environment:{type:'string',enum:['Production','Staging','Development','DR'],'x-datagen-weight':[40,25,25,10]},manufacturer:{type:'string',enum:['Dell','HP','Lenovo','Cisco','VMware','AWS'],'x-datagen-weight':[25,25,15,15,10,10]},asset_tag:{type:'string',pattern:'ASSET[0-9]{6}'}}}},
   {id:'s4',name:'VictoriaMetrics Time Series',description:'Time-series metric samples for VictoriaMetrics import',category:'observability',tags:['victoriametrics','metrics'],created_at:'2025-12-10T11:00:00Z',updated_at:'2026-02-28T13:30:00Z',
    schema:{type:'object',properties:{metric:{type:'string',enum:['node_cpu_seconds_total','node_memory_MemAvailable_bytes','node_disk_io_time_seconds_total','http_requests_total','process_cpu_seconds_total']},value:{type:'number',minimum:0,maximum:100},timestamp:{type:'string',format:'date-time'},instance:{type:'string'},job:{type:'string',enum:['node-exporter','prometheus','api-server','kubelet']}}}},
   {id:'s5',name:'Kafka User Activity Events',description:'User activity event stream for Kafka ingestion',category:'bigdata',tags:['kafka','events','streaming'],created_at:'2026-01-05T09:00:00Z',updated_at:'2026-03-10T11:15:00Z',
@@ -690,7 +874,6 @@ function renderConnections(){
     <div style="display:flex;gap:8px">
       <span class="tag tag-${catColor(connectorCategory(c.connector_type))}">${c.connector_type}</span>
       <span class="tag tag-blue">${c.auth_method}</span>
-      <span class="tag tag-${c.environment==='production'?'red':'green'}">${c.environment}</span>
     </div>
   </div>`).join('')}`;
 }
@@ -879,7 +1062,7 @@ function renderGenerate(){
 
       <div style="display:flex;gap:8px">
         <button class="gen-btn-generate" onclick="runGenerate()" ${sel?'':'disabled'}>Generate Data</button>
-        <button class="gen-btn-generate" style="background:var(--accent);flex:0 0 auto;min-width:160px" id="gen-preview-btn" onclick="runPreview()" ${sel?'':'disabled'} title="Preview generated data">&#128065; Preview</button>
+        <button class="gen-btn-preview" id="gen-preview-btn" onclick="runPreview()" ${sel?'':'disabled'} title="Preview generated data">&#128065; Preview</button>
         <div class="form-group" style="margin:0;width:80px">
           <label style="font-size:11px">Preview #</label>
           <input type="number" id="gen-preview-count" value="5" min="1" max="50" style="text-align:center;padding:14px 8px">
@@ -1074,12 +1257,228 @@ async function loadUsers(){
   } catch(e) { state._users = []; }
 }
 
+// =========================================================================
+// ML Analysis page
+// =========================================================================
+let _mlSelectedSchema = null;
+let _mlResults = null;
+let _mlRunning = false;
+
+function _mlAnalyzeSchema(schemaObj) {
+  const props = schemaObj.schema?.properties || {};
+  const fieldNames = Object.keys(props);
+  const totalFields = fieldNames.length;
+  if(!totalFields) return null;
+
+  // Schema quality score components
+  let descScore = schemaObj.description ? 20 : 0;
+  let tagScore = (schemaObj.tags?.length || 0) >= 2 ? 15 : (schemaObj.tags?.length ? 8 : 0);
+  let fieldDetailScore = 0;
+  const fieldAnalysis = [];
+
+  fieldNames.forEach(name => {
+    const f = props[name];
+    let fScore = 0, traits = [], warnings = [];
+    if(f.type) fScore += 10;
+    if(f.format) { fScore += 10; traits.push('format:'+f.format); }
+    if(f.enum) { fScore += 15; traits.push('enum('+f.enum.length+')'); }
+    if(f['x-datagen-weight']) { fScore += 10; traits.push('weighted'); }
+    if(f['x-datagen-faker']) { fScore += 15; traits.push('faker:'+f['x-datagen-faker']); }
+    if(f.pattern) { fScore += 10; traits.push('pattern'); }
+    if(f['x-datagen-distribution']) { fScore += 10; traits.push('distribution'); }
+    if(f['x-datagen-null-rate']) { fScore += 5; traits.push('nullable'); }
+    if(f['x-datagen-unique']) { fScore += 5; traits.push('unique'); }
+    if(f['x-datagen-depends-on']) { fScore += 10; traits.push('dependent'); }
+    if(f.minimum !== undefined || f.maximum !== undefined) { fScore += 5; traits.push('bounded'); }
+    // Warnings
+    if(!f.type && !f.enum && !f['$ref']) warnings.push('Missing type');
+    if(f.type==='string' && !f.format && !f.enum && !f.pattern && !f['x-datagen-faker']) warnings.push('Generic string — add faker or enum');
+    if(f.enum && !f['x-datagen-weight'] && f.enum.length > 2) warnings.push('Enum without weights — uniform distribution');
+
+    const capped = Math.min(fScore, 100);
+    fieldDetailScore += capped;
+    fieldAnalysis.push({name, type: f.type||'unknown', score: capped, traits, warnings, schema: f});
+  });
+
+  const avgFieldScore = Math.round(fieldDetailScore / totalFields);
+  const overallScore = Math.min(100, Math.round((descScore + tagScore + avgFieldScore * 0.65)));
+
+  // Distribution analysis
+  const typeDistribution = {};
+  fieldNames.forEach(n => { const t = props[n].type || 'unknown'; typeDistribution[t] = (typeDistribution[t]||0)+1; });
+
+  const enumFields = fieldAnalysis.filter(f => f.traits.some(t => t.startsWith('enum')));
+  const fakerFields = fieldAnalysis.filter(f => f.traits.some(t => t.startsWith('faker')));
+  const weightedFields = fieldAnalysis.filter(f => f.traits.includes('weighted'));
+
+  // Anomaly / recommendation insights
+  const insights = [];
+  if(overallScore >= 80) insights.push({type:'success', text:'Excellent schema quality. Rich field constraints ensure realistic data generation.'});
+  else if(overallScore >= 50) insights.push({type:'info', text:'Good schema quality. Consider adding weights, faker providers, or patterns to generic fields.'});
+  else insights.push({type:'warn', text:'Schema needs enrichment. Many fields lack constraints, which reduces data realism.'});
+
+  if(enumFields.length > 0 && weightedFields.length < enumFields.length)
+    insights.push({type:'info', text:`${enumFields.length - weightedFields.length} enum field(s) without weights — values will be uniformly distributed.`});
+
+  const genericStrings = fieldAnalysis.filter(f => f.warnings.some(w => w.includes('Generic string')));
+  if(genericStrings.length)
+    insights.push({type:'warn', text:`${genericStrings.length} generic string field(s) detected: ${genericStrings.map(f=>f.name).join(', ')}. Add x-datagen-faker for realism.`});
+
+  const missingType = fieldAnalysis.filter(f => f.warnings.some(w => w.includes('Missing type')));
+  if(missingType.length)
+    insights.push({type:'error', text:`${missingType.length} field(s) missing type definition: ${missingType.map(f=>f.name).join(', ')}`});
+
+  if(!schemaObj.description) insights.push({type:'info', text:'Add a description to improve schema discoverability.'});
+
+  return {overallScore, descScore, tagScore, avgFieldScore, totalFields, fieldAnalysis, typeDistribution, enumFields: enumFields.length, fakerFields: fakerFields.length, weightedFields: weightedFields.length, insights};
+}
+
+function _mlScoreColor(score) {
+  if(score >= 80) return 'var(--green-tx)';
+  if(score >= 50) return 'var(--amber-tx)';
+  return 'var(--red-tx)';
+}
+
+function _mlBarColor(score) {
+  if(score >= 80) return 'var(--green)';
+  if(score >= 50) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function _mlInsightIcon(type) {
+  return type==='success'?'&#9989;':type==='info'?'&#128161;':type==='warn'?'&#9888;&#65039;':'&#10060;';
+}
+
+function _mlRunAnalysis() {
+  if(!_mlSelectedSchema) return;
+  _mlRunning = true;
+  render();
+  setTimeout(() => {
+    const s = state.schemas.find(x=>x.id===_mlSelectedSchema);
+    if(s) _mlResults = _mlAnalyzeSchema(s);
+    _mlRunning = false;
+    render();
+  }, 400);
+}
+
+function renderMLAnalysis(){
+  // Summary stats across all schemas
+  const allResults = state.schemas.map(s => ({schema: s, result: _mlAnalyzeSchema(s)})).filter(x => x.result);
+  const avgScore = allResults.length ? Math.round(allResults.reduce((a,x) => a + x.result.overallScore, 0) / allResults.length) : 0;
+  const totalFieldsAll = allResults.reduce((a,x) => a + x.result.totalFields, 0);
+  const lowQuality = allResults.filter(x => x.result.overallScore < 50);
+  const highQuality = allResults.filter(x => x.result.overallScore >= 80);
+
+  // Currently selected schema results
+  const sel = _mlSelectedSchema ? state.schemas.find(x=>x.id===_mlSelectedSchema) : null;
+  const res = _mlResults;
+
+  return `
+  <div class="ml-grid">
+    <div class="ml-card">
+      <div class="ml-card-icon">&#129504;</div>
+      <h4>Portfolio Quality Score</h4>
+      <div style="font-size:36px;font-weight:700;color:${_mlScoreColor(avgScore)};margin:8px 0">${avgScore}<span style="font-size:16px;color:var(--tx-2)">/100</span></div>
+      <div class="ml-bar-track"><div class="ml-bar-fill" style="width:${avgScore}%;background:${_mlBarColor(avgScore)}"></div></div>
+      <p>Average quality across ${allResults.length} schemas</p>
+    </div>
+    <div class="ml-card">
+      <div class="ml-card-icon">&#128202;</div>
+      <h4>Schema Coverage</h4>
+      <div class="ml-stat-row"><span class="ml-stat-label">Total schemas</span><span class="ml-stat-value">${state.schemas.length}</span></div>
+      <div class="ml-stat-row"><span class="ml-stat-label">Total fields</span><span class="ml-stat-value">${totalFieldsAll}</span></div>
+      <div class="ml-stat-row"><span class="ml-stat-label">Avg fields/schema</span><span class="ml-stat-value">${allResults.length?Math.round(totalFieldsAll/allResults.length):0}</span></div>
+      <div class="ml-stat-row"><span class="ml-stat-label">Categories</span><span class="ml-stat-value">${new Set(state.schemas.map(s=>s.category)).size}</span></div>
+    </div>
+    <div class="ml-card">
+      <div class="ml-card-icon">&#127942;</div>
+      <h4>Quality Distribution</h4>
+      <div class="ml-stat-row"><span class="ml-stat-label">Excellent (&ge;80)</span><span class="ml-stat-value" style="color:var(--green-tx)">${highQuality.length}</span></div>
+      <div class="ml-stat-row"><span class="ml-stat-label">Good (50–79)</span><span class="ml-stat-value" style="color:var(--amber-tx)">${allResults.length - highQuality.length - lowQuality.length}</span></div>
+      <div class="ml-stat-row"><span class="ml-stat-label">Needs work (&lt;50)</span><span class="ml-stat-value" style="color:var(--red-tx)">${lowQuality.length}</span></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:280px 1fr;gap:16px">
+    <!-- Schema selector -->
+    <div class="ml-card" style="max-height:600px;overflow-y:auto">
+      <h4 style="margin-bottom:12px">Select Schema</h4>
+      ${allResults.sort((a,b)=>a.result.overallScore-b.result.overallScore).map(x => `
+        <div style="padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;margin-bottom:2px;border:1px solid ${_mlSelectedSchema===x.schema.id?'var(--accent)':'transparent'};background:${_mlSelectedSchema===x.schema.id?'var(--accent-bg)':'transparent'};transition:all .12s" onclick="_mlSelectedSchema='${x.schema.id}';_mlResults=null;render()">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;${_mlSelectedSchema===x.schema.id?'color:var(--accent-tx);font-weight:500':''}">${x.schema.name}</span>
+            <span style="font-size:12px;font-weight:600;color:${_mlScoreColor(x.result.overallScore)}">${x.result.overallScore}</span>
+          </div>
+          <div class="ml-bar-track" style="height:4px;margin:4px 0 0"><div class="ml-bar-fill" style="width:${x.result.overallScore}%;background:${_mlBarColor(x.result.overallScore)}"></div></div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Analysis results -->
+    <div>
+      ${!sel ? `<div class="ml-card" style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:12px">&#128270;</div><h4>Select a schema to analyze</h4><p>Pick a schema from the left panel to see detailed ML-powered quality analysis, field profiling, and improvement recommendations.</p></div>` :
+      !res ? `<div class="ml-card" style="text-align:center;padding:40px 20px">
+        <h4>${sel.name}</h4>
+        <p style="margin:8px 0 16px">${sel.description || 'No description'}</p>
+        <button class="btn btn-primary" onclick="_mlRunAnalysis()" ${_mlRunning?'disabled':''}>${_mlRunning?'Analyzing...':'Run Analysis'}</button>
+      </div>` :
+      `
+      <!-- Score breakdown -->
+      <div class="ml-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h4>${sel.name}</h4>
+          <span class="tag tag-${res.overallScore>=80?'green':res.overallScore>=50?'amber':'red'}" style="font-size:14px">${res.overallScore}/100</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700;color:${_mlScoreColor(res.overallScore)}">${res.overallScore}</div><div style="font-size:11px;color:var(--tx-2)">Overall</div></div>
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.totalFields}</div><div style="font-size:11px;color:var(--tx-2)">Fields</div></div>
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.enumFields}</div><div style="font-size:11px;color:var(--tx-2)">Enum fields</div></div>
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.fakerFields}</div><div style="font-size:11px;color:var(--tx-2)">Faker fields</div></div>
+        </div>
+
+        <!-- Insights -->
+        <h4 style="margin-bottom:8px">Insights & Recommendations</h4>
+        ${res.insights.map(i => `<div class="ml-insight"><span class="icon">${_mlInsightIcon(i.type)}</span><span>${i.text}</span></div>`).join('')}
+      </div>
+
+      <!-- Field-level analysis -->
+      <div class="ml-card">
+        <h4 style="margin-bottom:12px">Field Profiling</h4>
+        <table>
+          <tr><th>Field</th><th>Type</th><th>Score</th><th>Traits</th><th>Issues</th></tr>
+          ${res.fieldAnalysis.map(f => `
+            <tr>
+              <td style="font-family:var(--mono);font-size:12px">${f.name}</td>
+              <td><span class="tag tag-purple">${f.type}</span></td>
+              <td><span style="font-weight:600;color:${_mlScoreColor(f.score)}">${f.score}</span></td>
+              <td>${f.traits.length?f.traits.map(t=>'<span class="tag tag-blue" style="font-size:10px;margin:1px">'+t+'</span>').join(''):'<span style="color:var(--tx-2);font-size:12px">none</span>'}</td>
+              <td>${f.warnings.length?f.warnings.map(w=>'<span style="color:var(--amber-tx);font-size:12px">'+w+'</span>').join('<br>'):'<span style="color:var(--green-tx);font-size:12px">OK</span>'}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+
+      <!-- Type distribution -->
+      <div class="ml-card">
+        <h4 style="margin-bottom:12px">Type Distribution</h4>
+        ${Object.entries(res.typeDistribution).sort((a,b)=>b[1]-a[1]).map(([type,count]) => {
+          const pct = Math.round(count/res.totalFields*100);
+          return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+type+'</span><span style="color:var(--tx-2)">'+count+' ('+pct+'%)</span></div><div class="ml-bar-track"><div class="ml-bar-fill" style="width:'+pct+'%;background:var(--accent)"></div></div></div>';
+        }).join('')}
+      </div>
+
+      <button class="btn btn-primary" onclick="_mlRunAnalysis()" style="margin-top:4px" ${_mlRunning?'disabled':''}>Re-run Analysis</button>
+      `}
+    </div>
+  </div>`;
+}
+
 function render(){
   // Show/hide admin-only nav items
   const usersNav = document.getElementById('nav-users');
   if(usersNav) usersNav.style.display = isAdmin() ? 'flex' : 'none';
   updateAuthUI();
-  const pages = {dashboard:renderDashboard,schemas:renderSchemas,generate:renderGenerate,connectors:renderConnectorCatalog,users:renderUsers};
+  const pages = {dashboard:renderDashboard,schemas:renderSchemas,generate:renderGenerate,connectors:renderConnectorCatalog,users:renderUsers,ml:renderMLAnalysis};
   $('#content').innerHTML = (pages[state.currentPage]||renderDashboard)();
   if(state.currentPage==='users' && isAdmin() && !state._users) loadUsers().then(()=>render());
 }
@@ -1151,9 +1550,6 @@ function openConnectionModal(){
       <div class="form-group"><label>Connector type</label>
         <select id="mc-type">${DEMO_CONNECTORS.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
       </div>
-      <div class="form-group"><label>Environment</label>
-        <select id="mc-env"><option>development</option><option>staging</option><option>production</option></select>
-      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Host</label><input id="mc-host" placeholder="dev12345.service-now.com"></div>
@@ -1184,7 +1580,7 @@ function saveConnection(){
     host:$('#mc-host').value, port:$('#mc-port').value?parseInt($('#mc-port').value):null,
     auth_method:$('#mc-auth').value,
     credentials:{username:$('#mc-user').value,password:$('#mc-pass').value},
-    options:opts, environment:$('#mc-env').value, status:'healthy', created_at:new Date().toISOString()
+    options:opts, status:'healthy', created_at:new Date().toISOString()
   };
   state.connections.push(entry);
   $('.modal-overlay').remove();
@@ -1205,7 +1601,7 @@ async function testConnection(id){
         host:c.host, port:c.port||null,
         auth_method:c.auth_method,
         credentials:c.credentials||{username:'',password:''},
-        options:c.options||{}, environment:c.environment||'production'
+        options:c.options||{}
       })
     });
     if(!regResp.ok) throw new Error(`Registration failed: ${regResp.status}`);
@@ -1444,8 +1840,7 @@ async function runPush(){
         host:c.host, port:c.port||null,
         auth_method:c.auth_method,
         credentials:c.credentials||{username:'',password:''},
-        options:{table:table, api_mode:'table', batch_size:Math.min(count,50)},
-        environment:c.environment||'production'
+        options:{table:table, api_mode:'table', batch_size:Math.min(count,50)}
       })
     });
     if(!connResp.ok) throw new Error(`Connection registration failed: ${connResp.status} ${await connResp.text()}`);

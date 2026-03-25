@@ -115,6 +115,57 @@ async def delete_user_endpoint(user_id: str):
     return {"deleted": True}
 
 
+@app.post("/api/auth/register")
+async def register(body: dict):
+    username = body.get("username", "").strip()
+    password = body.get("password", "")
+    email = body.get("email", "").strip().lower()
+    display_name = body.get("display_name", "").strip()
+    if not username or not password:
+        raise HTTPException(400, "Username and password required")
+    if len(password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+    if email and not _is_valid_email(email):
+        raise HTTPException(400, "Invalid email address")
+    if await db.check_username_exists(username):
+        raise HTTPException(409, "Username already taken")
+    if email and await db.check_email_exists(email):
+        raise HTTPException(409, "Email already registered")
+    user = await db.create_user(username, password, role="user",
+                                display_name=display_name, email=email)
+    return {"user": user, "token": f"{user['id']}:{user['role']}"}
+
+
+@app.post("/api/auth/reset-password")
+async def reset_password(body: dict):
+    username = body.get("username", "").strip()
+    email = body.get("email", "").strip().lower()
+    new_password = body.get("new_password", "")
+    if not new_password:
+        raise HTTPException(400, "New password is required")
+    if len(new_password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+    if not username and not email:
+        raise HTTPException(400, "Username or email is required")
+    # Look up user by username or email
+    user = None
+    if username:
+        user = await db.get_user_by_username(username)
+    if not user and email:
+        user = await db.get_user_by_email(email)
+    if not user:
+        raise HTTPException(404, "No account found with that username or email")
+    updated = await db.update_user_password(user["id"], new_password)
+    if not updated:
+        raise HTTPException(500, "Failed to update password")
+    return {"message": "Password reset successfully", "username": user["username"]}
+
+
+def _is_valid_email(email: str) -> bool:
+    import re
+    return bool(re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email))
+
+
 # ---------------------------------------------------------------------------
 # Health
 # ---------------------------------------------------------------------------
@@ -190,7 +241,6 @@ async def create_connection_endpoint(req: ConnectionCreateRequest):
         auth_method=req.auth_method.value,
         credentials=req.credentials,
         options=req.options,
-        environment=req.environment,
     )
     return entry
 

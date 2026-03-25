@@ -91,7 +91,6 @@ CREATE TABLE IF NOT EXISTS connections (
     auth_method     TEXT NOT NULL DEFAULT 'basic',
     credentials     JSONB NOT NULL DEFAULT '{}',
     options         JSONB NOT NULL DEFAULT '{}',
-    environment     TEXT NOT NULL DEFAULT 'development',
     status          TEXT NOT NULL DEFAULT 'untested',
     last_health_check TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -118,6 +117,7 @@ CREATE TABLE IF NOT EXISTS users (
     id          TEXT PRIMARY KEY,
     username    TEXT UNIQUE NOT NULL,
     password    TEXT NOT NULL,
+    email       TEXT UNIQUE,
     role        TEXT NOT NULL DEFAULT 'user',
     display_name TEXT NOT NULL DEFAULT '',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -127,6 +127,12 @@ CREATE INDEX IF NOT EXISTS idx_schemas_category ON schemas(category);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_started ON jobs(started_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+-- Migration: add email column if it doesn't exist (safe for existing installs)
+DO $$ BEGIN
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT UNIQUE;
+EXCEPTION WHEN others THEN NULL;
+END $$;
 """
 
 
@@ -213,21 +219,20 @@ async def create_connection(
     auth_method: str,
     credentials: dict | None = None,
     options: dict | None = None,
-    environment: str = "development",
 ) -> dict:
     cid = _new_id()
     now = _now()
     async with _pool.connection() as conn:
         await conn.execute(
             """INSERT INTO connections
-               (id, name, connector_type, host, port, auth_method, credentials, options, environment, status, created_at)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'untested', %s)""",
+               (id, name, connector_type, host, port, auth_method, credentials, options, status, created_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'untested', %s)""",
             (cid, name, connector_type, host, port, auth_method,
-             json.dumps(credentials or {}), json.dumps(options or {}), environment, now),
+             json.dumps(credentials or {}), json.dumps(options or {}), now),
         )
         await conn.commit()
     return _conn_dict(cid, name, connector_type, host, port, auth_method,
-                      credentials or {}, options or {}, environment, "untested", None, now)
+                      credentials or {}, options or {}, "untested", None, now)
 
 
 async def get_connection(conn_id: str) -> dict | None:
@@ -274,11 +279,11 @@ async def delete_connection(conn_id: str) -> bool:
 
 
 def _conn_dict(cid, name, connector_type, host, port, auth_method,
-               credentials, options, environment, status, last_hc, created_at) -> dict:
+               credentials, options, status, last_hc, created_at) -> dict:
     return {
         "id": cid, "name": name, "connector_type": connector_type,
         "host": host, "port": port, "auth_method": auth_method,
-        "options": options, "environment": environment,
+        "options": options,
         "status": status, "last_health_check": _ts(last_hc) if last_hc else None,
         "created_at": _ts(created_at) if not isinstance(created_at, str) else created_at,
     }
@@ -289,7 +294,6 @@ def _row_to_conn(r: dict) -> dict:
         "id": r["id"], "name": r["name"], "connector_type": r["connector_type"],
         "host": r["host"], "port": r["port"], "auth_method": r["auth_method"],
         "options": r["options"] if isinstance(r["options"], dict) else json.loads(r["options"]),
-        "environment": r["environment"],
         "status": r["status"],
         "last_health_check": _ts(r["last_health_check"]) if r.get("last_health_check") else None,
         "created_at": _ts(r["created_at"]),
@@ -414,6 +418,7 @@ async def create_user(
     password: str,
     role: str = "user",
     display_name: str = "",
+    email: str = "",
 ) -> dict:
     import hashlib
     uid = _new_id()
@@ -421,14 +426,14 @@ async def create_user(
     pw_hash = hashlib.sha256(password.encode()).hexdigest()
     async with _pool.connection() as conn:
         await conn.execute(
-            """INSERT INTO users (id, username, password, role, display_name, created_at)
-               VALUES (%s, %s, %s, %s, %s, %s)
+            """INSERT INTO users (id, username, password, email, role, display_name, created_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
                ON CONFLICT (username) DO NOTHING""",
-            (uid, username, pw_hash, role, display_name or username, now),
+            (uid, username, pw_hash, email or None, role, display_name or username, now),
         )
         await conn.commit()
     return {"id": uid, "username": username, "role": role,
-            "display_name": display_name or username, "created_at": now}
+            "display_name": display_name or username, "email": email, "created_at": now}
 
 
 async def authenticate_user(username: str, password: str) -> dict | None:
@@ -463,10 +468,79 @@ async def delete_user(user_id: str) -> bool:
         return cur.rowcount > 0
 
 
+async def get_user_by_username(username: str) -> dict | None:
+    """Look up a user by username (without password check)."""
+    async with _pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT id, username, email, role, display_name, created_at FROM users WHERE username = %s",
+            (username,),
+        )
+        r = await cur.fetchone()
+    if not r:
+        return None
+    return {
+        "id": r["id"], "username": r["username"], "email": r.get("email", ""),
+        "role": r["role"], "display_name": r["display_name"],
+        "created_at": _ts(r["created_at"]),
+    }
+
+
+async def get_user_by_email(email: str) -> dict | None:
+    """Look up a user by email address."""
+    async with _pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT id, username, email, role, display_name, created_at FROM users WHERE email = %s",
+            (email,),
+        )
+        r = await cur.fetchone()
+    if not r:
+        return None
+    return {
+        "id": r["id"], "username": r["username"], "email": r.get("email", ""),
+        "role": r["role"], "display_name": r["display_name"],
+        "created_at": _ts(r["created_at"]),
+    }
+
+
+async def update_user_password(user_id: str, new_password: str) -> bool:
+    """Update a user's password."""
+    import hashlib
+    pw_hash = hashlib.sha256(new_password.encode()).hexdigest()
+    async with _pool.connection() as conn:
+        cur = await conn.execute(
+            "UPDATE users SET password = %s WHERE id = %s",
+            (pw_hash, user_id),
+        )
+        await conn.commit()
+        return cur.rowcount > 0
+
+
+async def check_username_exists(username: str) -> bool:
+    """Check if a username is already taken."""
+    async with _pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT 1 FROM users WHERE username = %s", (username,)
+        )
+        return await cur.fetchone() is not None
+
+
+async def check_email_exists(email: str) -> bool:
+    """Check if an email is already registered."""
+    if not email:
+        return False
+    async with _pool.connection() as conn:
+        cur = await conn.execute(
+            "SELECT 1 FROM users WHERE email = %s", (email,)
+        )
+        return await cur.fetchone() is not None
+
+
 async def seed_default_users() -> None:
     """Create default admin and user accounts if they don't exist."""
-    await create_user("admin", "admin123", role="admin", display_name="Administrator")
-    await create_user("user", "user123", role="user", display_name="Regular User")
+    await create_user("admin", "admin123", role="admin", display_name="Administrator",
+                      email="admin@genforge.local")
+    await create_user("user", "user123", role="user", display_name="Regular User",
+                      email="user@genforge.local")
 
 
 # ---------------------------------------------------------------------------

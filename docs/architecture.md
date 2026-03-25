@@ -17,6 +17,9 @@ User authentication with role-based access control protects admin operations.
 - **Copy & download** — one-click copy to clipboard or download as JSON file
 - **PostgreSQL persistence** — schemas, connections, jobs, and users persist across restarts
 - **User authentication** — login with admin/user roles; role-based UI controls
+- **User registration** — self-service account creation with optional email, auto-login
+- **Forgot password** — reset by username or email from the login screen
+- **ML schema analysis** — portfolio quality scoring, field profiling, type distribution, recommendations
 - **Real-time WebSocket updates** — job progress broadcast to connected dashboard clients
 
 ---
@@ -33,9 +36,10 @@ User authentication with role-based access control protects admin operations.
 │  │ (60 templates,  │  │ (16 targets,  │  │ (preview, batch,    │ │
 │  │  load from file)│  │  auth config) │  │  edge-case toggle)  │ │
 │  └───────┬────────┘  └──────┬────────┘  └──────────┬──────────┘ │
-│  ┌───────┴────────┐         │                       │            │
-│  │ User Mgmt      │         │                       │            │
-│  │ (admin only)   │─────────┼───────────────────────┘            │
+│  ┌───────┴────────┐  ┌──────┴────────┐             │            │
+│  │ ML Analysis    │  │ User Mgmt     │             │            │
+│  │ (quality score,│  │ (admin only)  │─────────────┘            │
+│  │  field profile)│  └───────────────┘                          │
 │  └────────────────┘         │  REST + WebSocket                  │
 └─────────────────────────────┼────────────────────────────────────┘
                               ▼
@@ -45,7 +49,9 @@ User authentication with role-based access control protects admin operations.
 │                                                                  │
 │  ┌──────────┐ ┌──────────┐ ┌───────────┐ ┌──────────────────┐  │
 │  │ /api/    │ │ /api/    │ │ /api/     │ │ /api/auth/login  │  │
-│  │ schemas  │ │ generate │ │ jobs      │ │ /api/auth/users  │  │
+│  │ schemas  │ │ generate │ │ jobs      │ │ /api/auth/register│  │
+│  │          │ │          │ │           │ │ /api/auth/reset-pw│  │
+│  │          │ │          │ │           │ │ /api/auth/users  │  │
 │  └────┬─────┘ └────┬─────┘ └─────┬─────┘ └──────────────────┘  │
 │       │             │             │                               │
 │       ▼             ▼             ▼                               │

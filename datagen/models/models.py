@@ -57,7 +57,6 @@ class ConnectionCreateRequest(BaseModel):
     auth_method: AuthMethodEnum = AuthMethodEnum.BASIC
     credentials: dict[str, str] = {}
     options: dict[str, Any] = {}
-    environment: str = "development"
 
 
 class ConnectionResponse(BaseModel):
@@ -68,7 +67,6 @@ class ConnectionResponse(BaseModel):
     port: int | None
     auth_method: str
     options: dict[str, Any]
-    environment: str
     status: str = "unknown"
     last_health_check: str | None = None
     created_at: str

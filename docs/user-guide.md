@@ -168,6 +168,22 @@ View all generation jobs with real-time status.
 
 Reference page listing all 16 supported connectors, alphabetically sorted and grouped by category, with type identifiers and supported auth methods.
 
+### ML Analysis
+
+The **ML Analysis** page (under the Intelligence section in the sidebar) provides automated schema quality analysis:
+
+- **Portfolio Quality Score** — aggregate quality score across all schemas (0–100)
+- **Schema Coverage** — total schemas, total fields, avg fields per schema, category count
+- **Quality Distribution** — breakdown into excellent (≥80), good (50–79), and needs-work (<50)
+- **Schema Selector** — pick any schema to analyze, sorted by quality score with mini progress bars
+- **Per-Schema Analysis** — click "Run Analysis" to see:
+  - Score breakdown (overall, field count, enum fields, faker fields)
+  - Insights & recommendations (actionable tips to improve data realism)
+  - Field profiling table (per-field type, score, traits like weighted/faker/pattern, and warnings)
+  - Type distribution chart (visual bars showing field type proportions)
+
+The quality score considers: description, tags, field types, formats, enums, weights, faker providers, patterns, distributions, null rates, uniqueness, dependencies, and bounds.
+
 ### User Management (Admin only)
 
 Admin users can access the **User Management** page from the sidebar:
@@ -185,7 +201,19 @@ GenForge requires login to access the dashboard:
 - Sessions are persisted to `localStorage` — you stay logged in across page reloads
 - Click the user badge in the sidebar footer to sign out
 - **Admin role**: create/edit/delete schemas, connections, users; push data; test connections
-- **User role**: view schemas, connections, connector catalog; generate previews only
+- **User role**: view schemas, connections, connector catalog, ML analysis; generate previews only
+
+**Self-service registration:**
+1. Click **Create an account** on the login screen
+2. Enter username (required), email (optional), display name (optional), and password (min 6 characters)
+3. Confirm password and click **Create Account**
+4. You are automatically signed in after successful registration (assigned the "user" role)
+
+**Forgot password:**
+1. Click **Forgot password?** on the login screen
+2. Enter your username or email address
+3. Enter a new password (min 6 characters) and confirm it
+4. Click **Reset Password** — you’ll be redirected back to the login screen
 
 ---
 
