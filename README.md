@@ -83,10 +83,12 @@ test-data-generation-ai/
 │   └── docker-compose.yml         # Full stack (API + dashboard + Postgres + Redis)
 ├── docs/
 │   ├── architecture.md            # Architecture & component details
-│   ├── user-guide.md              # End-user guide & CLI reference
-│   └── TEST_DATA_GENERATION.md    # Feature specification
+│   └── user-guide.md              # End-user guide & CLI reference
 ├── tests/
-│   └── test_engine.py             # Engine & pipeline tests
+│   ├── test_engine.py             # Engine & pipeline tests
+│   ├── test_connectors.py         # Connector registry, base class, auth provider tests
+│   ├── test_models.py             # Pydantic API model tests
+│   └── test_edge_cases.py         # Edge-case & boundary value tests
 ├── .env.example                   # Database connection string config
 ├── requirements.txt
 ├── setup.py
@@ -247,9 +249,8 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 
 ## Documentation
 
-- **[Architecture](docs/architecture.md)** — system diagram, components, data flow, configuration
-- **[User Guide](docs/user-guide.md)** — installation, dashboard guide, CLI reference, schema spec, push target config
-- **[Feature Specification](docs/TEST_DATA_GENERATION.md)** — full feature spec with template library and API reference
+- **[Architecture](docs/architecture.md)** — system diagram, components, data flow, file reference, configuration
+- **[User Guide](docs/user-guide.md)** — installation, dashboard guide, CLI reference, schema spec, push target config, dependencies, troubleshooting
 
 ## Docker Deployment
 

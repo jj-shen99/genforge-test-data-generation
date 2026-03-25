@@ -6,6 +6,19 @@ GenForge is a full-stack test data generation platform. It generates realistic, 
 synthetic data and pushes it directly into external systems through 16 authenticated connectors.
 User authentication with role-based access control protects admin operations.
 
+### Core Capabilities
+
+- **Schema-driven generation** — JSON Schema dialect with `x-datagen-*` extensions for weighted enums, Faker providers, distributions, null rates, uniqueness, and foreign key references
+- **54 built-in templates** — pre-configured schemas across 13 categories (datacenter, cloud, ITSM, observability, databases, CI/CD, security, networking, messaging, analytics, devops)
+- **Push to 16 external systems** — authenticated connectors routed through the backend API (no CORS issues)
+- **Edge-case injection** — toggle to generate boundary values, empty strings, and extreme numbers
+- **Configurable volume** — 1 to 10,000 records per batch
+- **File upload** — import schemas from `.json` files via file picker
+- **Copy & download** — one-click copy to clipboard or download as JSON file
+- **PostgreSQL persistence** — schemas, connections, jobs, and users persist across restarts
+- **User authentication** — login with admin/user roles; role-based UI controls
+- **Real-time WebSocket updates** — job progress broadcast to connected dashboard clients
+
 ---
 
 ## System Diagram
@@ -77,11 +90,14 @@ User authentication with role-based access control protects admin operations.
 
 ### 1. Web Dashboard
 
-| Attribute   | Value                              |
-|-------------|------------------------------------|
-| Technology  | Vanilla HTML + JavaScript (SPA)    |
-| Port        | 3880 (nginx in Docker, or static)  |
-| API target  | `http://localhost:3800/api`         |
+| Attribute        | Value                              |
+|------------------|------------------------------------|
+| Technology       | Vanilla HTML + JavaScript (SPA)    |
+| Port             | 3880 (nginx in Docker, or static)  |
+| API target       | `http://localhost:3800/api`         |
+| State management | JavaScript `state` object          |
+| HTTP client      | `fetch` API                        |
+| Styling          | CSS custom properties (Light/Dark) |
 
 **Pages:**
 
@@ -103,6 +119,12 @@ User authentication with role-based access control protects admin operations.
 | Port        | 3800                                     |
 | Transport   | REST + WebSocket (`/ws`)                 |
 | State       | PostgreSQL (psycopg3 async + connection pool) |
+| Models      | Pydantic v2                              |
+
+**Request flow:**
+
+1. **Generate**: User selects a schema → `POST /api/generate` → SchemaParser generates N records → JSON response displayed in UI
+2. **Push**: User selects connection + schema → backend registers both → `POST /api/jobs` → backend generates records, pushes via connector, persists result in PostgreSQL
 
 **Key endpoints:**
 
@@ -232,10 +254,12 @@ genforge/
 │   └── docker-compose.yml
 ├── docs/
 │   ├── architecture.md       # This document
-│   ├── user-guide.md         # End-user guide
-│   └── TEST_DATA_GENERATION.md  # Feature specification
+│   └── user-guide.md         # End-user guide & CLI reference
 ├── tests/
-│   └── test_engine.py
+│   ├── test_engine.py        # Engine & pipeline tests
+│   ├── test_connectors.py    # Registry, base class, auth provider
+│   ├── test_models.py        # Pydantic API models
+│   └── test_edge_cases.py    # Boundary value & edge-case tests
 ├── .env.example              # Database connection string config
 ├── requirements.txt
 ├── setup.py
@@ -282,3 +306,24 @@ User → Dashboard → POST /api/jobs {schema_id, connection_id, count}
 | Dashboard  | 3880 |
 | PostgreSQL | 5432 |
 | Redis      | 6379 |
+
+---
+
+## File Reference
+
+| File | Role |
+|---|---|
+| `datagen/api/server.py` | FastAPI backend: all REST endpoints, job execution |
+| `datagen/db/database.py` | PostgreSQL persistence: async CRUD, connection pool, DDL |
+| `datagen/models/models.py` | Pydantic request/response models |
+| `datagen/engine/schema_parser.py` | JSON Schema parser with x-datagen extensions |
+| `datagen/engine/generators.py` | Data generation primitives (Faker + custom) |
+| `datagen/engine/timeseries.py` | Time-series patterns and log entry generation |
+| `datagen/engine/pipeline.py` | Multi-schema generation with dependency resolution |
+| `datagen/connectors/base.py` | Abstract connector interface (`BaseConnector`) |
+| `datagen/connectors/registry.py` | Plugin discovery & registration (16 connectors) |
+| `datagen/connectors/auth.py` | Auth provider (session creation for connectors) |
+| `datagen/cli.py` | CLI entry point (`genforge` command) |
+| `dashboard/index.html` | Web dashboard SPA (54 templates, light/dark theme) |
+| `setup.py` | Package definition, extras, entry points |
+| `.env.example` | Database connection string configuration |

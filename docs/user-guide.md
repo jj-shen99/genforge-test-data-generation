@@ -436,13 +436,35 @@ Schemas follow JSON Schema with GenForge-specific extensions.
 | Auth method  | `basic`, `certificate`                      |
 | Options      | `{"catalog": "hive", "schema": "default", "table": "events"}` |
 
-### VictoriaMetrics
+---
 
-| Field        | Description                                 |
-|--------------|---------------------------------------------|
-| Host         | Server URL, e.g., `localhost`               |
-| Port         | 8428                                        |
-| Auth method  | `bearer_token`, `basic`                     |
+## Backend Dependencies
+
+### Core (always required)
+
+```bash
+pip install fastapi uvicorn pydantic faker jsonschema httpx orjson
+pip install "psycopg[binary]" psycopg-pool   # PostgreSQL persistence
+```
+
+### Connector-specific (install as needed)
+
+```bash
+pip install pymongo             # MongoDB
+pip install confluent-kafka     # Kafka
+pip install redis               # Redis
+pip install trino               # Trino
+pip install boto3               # AWS (DynamoDB, S3, SQS, Kinesis)
+pip install prometheus_client   # Prometheus
+```
+
+### Install everything
+
+```bash
+pip install -e ".[all]"
+```
+
+> **Note:** Each connector gracefully handles missing packages — if a required library is not installed, the API returns a descriptive error with install instructions.
 
 ---
 
