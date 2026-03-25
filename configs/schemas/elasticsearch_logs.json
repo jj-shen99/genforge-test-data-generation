@@ -1,0 +1,71 @@
+{
+  "title": "Elasticsearch Log Entry",
+  "description": "Structured log entries for Elasticsearch / OpenSearch ingestion",
+  "x-datagen-category": "observability",
+  "x-datagen-tags": ["elasticsearch", "logs", "observability"],
+  "type": "object",
+  "properties": {
+    "@timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "x-datagen-time-pattern": {
+        "base": "now-24h",
+        "end": "now"
+      }
+    },
+    "level": {
+      "type": "string",
+      "enum": ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"],
+      "x-datagen-weight": [5, 55, 20, 15, 5]
+    },
+    "message": {
+      "type": "string",
+      "x-datagen-faker": "lorem.sentence"
+    },
+    "service": {
+      "type": "string",
+      "enum": ["api-gateway", "auth-service", "user-service", "order-service", "payment-service", "notification-service"],
+      "x-datagen-weight": [25, 15, 20, 20, 10, 10]
+    },
+    "host": {
+      "type": "string",
+      "x-datagen-faker": "internet.domain"
+    },
+    "source_ip": {
+      "type": "string",
+      "format": "ipv4"
+    },
+    "trace_id": {
+      "type": "string",
+      "x-datagen-faker": "misc.md5"
+    },
+    "span_id": {
+      "type": "string",
+      "pattern": "[a-f0-9]{16}"
+    },
+    "http_method": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      "x-datagen-weight": [50, 25, 10, 10, 5]
+    },
+    "http_status": {
+      "type": "integer",
+      "enum": [200, 201, 204, 301, 400, 401, 403, 404, 500, 502, 503],
+      "x-datagen-weight": [45, 10, 5, 3, 8, 5, 3, 8, 5, 3, 5]
+    },
+    "response_time_ms": {
+      "type": "number",
+      "x-datagen-distribution": {
+        "type": "exponential",
+        "mean": 150
+      },
+      "minimum": 1,
+      "x-datagen-precision": 1
+    },
+    "request_path": {
+      "type": "string",
+      "enum": ["/api/v1/users", "/api/v1/orders", "/api/v1/auth/login", "/api/v1/products", "/api/v1/payments", "/health"],
+      "x-datagen-weight": [25, 20, 15, 20, 10, 10]
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "title": "Prometheus Metrics",
+  "description": "Time-series metrics for Prometheus remote write",
+  "x-datagen-category": "observability",
+  "x-datagen-tags": ["prometheus", "metrics", "timeseries"],
+  "type": "object",
+  "properties": {
+    "metric": {
+      "type": "string",
+      "enum": [
+        "http_requests_total",
+        "http_request_duration_seconds",
+        "cpu_usage_percent",
+        "memory_usage_bytes",
+        "disk_io_read_bytes",
+        "error_rate"
+      ],
+      "x-datagen-weight": [25, 20, 20, 15, 10, 10]
+    },
+    "value": {
+      "type": "number",
+      "x-datagen-distribution": {
+        "type": "gaussian",
+        "mean": 50,
+        "stddev": 20
+      },
+      "minimum": 0,
+      "maximum": 100
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "x-datagen-time-pattern": {
+        "base": "now-24h",
+        "end": "now",
+        "format": "iso"
+      }
+    },
+    "labels": {
+      "type": "object",
+      "properties": {
+        "instance": {
+          "type": "string",
+          "enum": ["web-1:9090", "web-2:9090", "api-1:9090", "api-2:9090", "db-1:9090"],
+          "x-datagen-weight": [25, 25, 20, 20, 10]
+        },
+        "job": {
+          "type": "string",
+          "enum": ["web-server", "api-server", "database"],
+          "x-datagen-weight": [40, 40, 20]
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["production", "staging"],
+          "x-datagen-weight": [70, 30]
+        }
+      }
+    }
+  }
+}

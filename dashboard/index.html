@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenForge — Test Data Generation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== Dark theme (default) ===== */
+:root, [data-theme="dark"] {
+  --bg-0: #0c0c0f; --bg-1: #141418; --bg-2: #1c1c22; --bg-3: #26262e;
+  --tx-0: #f0eff4; --tx-1: #b0afc0; --tx-2: #78778a;
+  --bd: rgba(255,255,255,0.08); --bd-h: rgba(255,255,255,0.14);
+  --accent: #6c5ce7; --accent-bg: rgba(108,92,231,0.12); --accent-tx: #a899f5;
+  --green: #00b894; --green-bg: rgba(0,184,148,0.12); --green-tx: #6be4c8;
+  --red: #e05252; --red-bg: rgba(224,82,82,0.12); --red-tx: #f09090;
+  --amber: #f0a030; --amber-bg: rgba(240,160,48,0.12); --amber-tx: #fcc56e;
+  --blue: #3b82f6; --blue-bg: rgba(59,130,246,0.12); --blue-tx: #93bbfc;
+  --teal: #0d9488; --teal-bg: rgba(13,148,136,0.12); --teal-tx: #5eead4;
+  --coral: #e07040; --coral-bg: rgba(224,112,64,0.12); --coral-tx: #f0a888;
+  --radius: 10px; --radius-sm: 6px;
+  --font: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+/* ===== Light theme ===== */
+[data-theme="light"] {
+  --bg-0: #f4f5f7; --bg-1: #ffffff; --bg-2: #ebedf0; --bg-3: #dde0e4;
+  --tx-0: #1a1a2e; --tx-1: #4a4a6a; --tx-2: #8888a0;
+  --bd: rgba(0,0,0,0.09); --bd-h: rgba(0,0,0,0.16);
+  --accent: #6c5ce7; --accent-bg: rgba(108,92,231,0.10); --accent-tx: #5a4bd4;
+  --green: #00a884; --green-bg: rgba(0,168,132,0.10); --green-tx: #008868;
+  --red: #d94040; --red-bg: rgba(217,64,64,0.10); --red-tx: #c03030;
+  --amber: #d48c20; --amber-bg: rgba(212,140,32,0.10); --amber-tx: #b07010;
+  --blue: #2563eb; --blue-bg: rgba(37,99,235,0.10); --blue-tx: #1d4ed8;
+  --teal: #0d7d73; --teal-bg: rgba(13,125,115,0.10); --teal-tx: #0a6b62;
+  --coral: #c85a30; --coral-bg: rgba(200,90,48,0.10); --coral-tx: #a84820;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; background:var(--bg-0); color:var(--tx-0); font-family:var(--font); font-size:22px; line-height:1.55; }
+
+/* Layout */
+.app { display:flex; height:100vh; }
+.sidebar { width:240px; background:var(--bg-1); border-right:1px solid var(--bd); display:flex; flex-direction:column; flex-shrink:0; }
+.sidebar-header { padding:20px 20px 16px; border-bottom:1px solid var(--bd); }
+.sidebar-header h1 { font-size:28px; font-weight:600; letter-spacing:-0.3px; }
+.sidebar-header h1 span { color:var(--accent-tx); }
+.sidebar-header p { font-size:17px; color:var(--tx-2); margin-top:2px; }
+.sidebar-nav { flex:1; padding:12px 10px; overflow-y:auto; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:var(--radius-sm); cursor:pointer; color:var(--tx-1); font-size:19px; font-weight:400; transition:all .15s; margin-bottom:2px; }
+.nav-item:hover { background:var(--bg-2); color:var(--tx-0); }
+.nav-item.active { background:var(--accent-bg); color:var(--accent-tx); font-weight:500; }
+.nav-item svg { width:18px; height:18px; opacity:0.6; }
+.nav-item.active svg { opacity:1; }
+.nav-section { font-size:16px; font-weight:500; color:var(--tx-2); text-transform:uppercase; letter-spacing:0.8px; padding:16px 12px 6px; }
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.topbar { height:52px; border-bottom:1px solid var(--bd); display:flex; align-items:center; padding:0 24px; gap:12px; flex-shrink:0; background:var(--bg-1); }
+.topbar h2 { font-size:26px; font-weight:500; }
+.topbar .badge { font-size:17px; background:var(--bg-3); padding:2px 8px; border-radius:20px; color:var(--tx-2); }
+.content { flex:1; overflow-y:auto; padding:24px; }
+
+/* Cards */
+.card { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.card-title { font-size:20px; font-weight:500; }
+.card-subtitle { font-size:18px; color:var(--tx-2); margin-top:2px; }
+
+/* Metrics grid */
+.metrics { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+.metric { background:var(--bg-2); border-radius:var(--radius-sm); padding:16px; }
+.metric-label { font-size:17px; color:var(--tx-2); font-weight:400; }
+.metric-value { font-size:36px; font-weight:600; letter-spacing:-1px; margin-top:4px; }
+.metric-value.accent { color:var(--accent-tx); }
+.metric-value.green { color:var(--green-tx); }
+.metric-value.amber { color:var(--amber-tx); }
+
+/* Buttons */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border-radius:var(--radius-sm); font-size:19px; font-family:var(--font); font-weight:500; cursor:pointer; border:1px solid var(--bd); background:var(--bg-2); color:var(--tx-0); transition:all .15s; }
+.btn:hover { border-color:var(--bd-h); background:var(--bg-3); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-primary:hover { filter:brightness(1.1); }
+.btn-sm { padding:6px 12px; font-size:18px; }
+.btn-danger { color:var(--red-tx); border-color:rgba(224,82,82,0.3); }
+.btn-danger:hover { background:var(--red-bg); }
+
+/* Inputs */
+input, select, textarea { background:var(--bg-2); border:1px solid var(--bd); border-radius:var(--radius-sm); padding:10px 14px; color:var(--tx-0); font-family:var(--font); font-size:19px; width:100%; transition:border-color .15s; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); }
+textarea { resize:vertical; min-height:120px; font-family:var(--mono); font-size:18px; line-height:1.6; }
+label { display:block; font-size:18px; color:var(--tx-1); margin-bottom:4px; font-weight:500; }
+.form-group { margin-bottom:14px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* Tags */
+.tag { display:inline-block; font-size:17px; padding:3px 10px; border-radius:20px; font-weight:500; }
+.tag-purple { background:var(--accent-bg); color:var(--accent-tx); }
+.tag-green { background:var(--green-bg); color:var(--green-tx); }
+.tag-red { background:var(--red-bg); color:var(--red-tx); }
+.tag-amber { background:var(--amber-bg); color:var(--amber-tx); }
+.tag-blue { background:var(--blue-bg); color:var(--blue-tx); }
+.tag-teal { background:var(--teal-bg); color:var(--teal-tx); }
+.tag-coral { background:var(--coral-bg); color:var(--coral-tx); }
+
+/* Table */
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; font-size:17px; font-weight:500; color:var(--tx-2); text-transform:uppercase; letter-spacing:0.5px; padding:10px 12px; border-bottom:1px solid var(--bd); }
+td { padding:12px 12px; border-bottom:1px solid var(--bd); font-size:19px; color:var(--tx-1); }
+tr:hover td { background:rgba(255,255,255,0.02); }
+
+/* Code preview */
+.code-preview { background:var(--bg-0); border:1px solid var(--bd); border-radius:var(--radius-sm); padding:16px; font-family:var(--mono); font-size:18px; color:var(--tx-1); line-height:1.6; overflow-x:auto; max-height:400px; overflow-y:auto; white-space:pre-wrap; }
+
+/* Progress */
+.progress-bar { height:6px; background:var(--bg-3); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:3px; transition:width .3s ease; }
+
+/* Status dot */
+.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+.status-dot.healthy { background:var(--green); box-shadow:0 0 6px var(--green); }
+.status-dot.error { background:var(--red); box-shadow:0 0 6px var(--red); }
+.status-dot.unknown { background:var(--tx-2); }
+
+/* Connector catalog grid */
+.connector-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px; }
+.connector-card { background:var(--bg-2); border:1px solid var(--bd); border-radius:var(--radius-sm); padding:14px; transition:all .15s; cursor:default; }
+.connector-card:hover { border-color:var(--bd-h); }
+.connector-card .name { font-size:19px; font-weight:500; margin-bottom:4px; }
+.connector-card .cat { font-size:17px; color:var(--tx-2); }
+
+/* Empty state */
+.empty { text-align:center; padding:40px 20px; color:var(--tx-2); }
+.empty p { font-size:19px; margin-top:8px; }
+
+/* Theme toggle */
+.theme-toggle { background:var(--bg-2); border:1px solid var(--bd); border-radius:var(--radius-sm); padding:7px 10px; cursor:pointer; color:var(--tx-1); font-size:16px; display:flex; align-items:center; gap:6px; transition:all .15s; width:100%; justify-content:center; }
+.theme-toggle:hover { border-color:var(--bd-h); color:var(--tx-0); }
+.theme-toggle svg { width:14px; height:14px; }
+
+/* Modal overlay */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(4px); }
+.modal { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:24px; width:560px; max-width:90vw; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow); }
+.modal h3 { font-size:26px; font-weight:500; margin-bottom:16px; }
+
+/* Generate page layout */
+.gen-layout { display:grid; grid-template-columns:2fr 3fr; gap:16px; margin-bottom:16px; }
+.gen-templates { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:16px; max-height:520px; display:flex; flex-direction:column; }
+.gen-templates-header { font-size:19px; font-weight:500; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.gen-templates-header .count { font-size:12px; color:var(--tx-2); font-weight:400; }
+.gen-cat-pills { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+.gen-cat-pill { display:inline-block; padding:4px 10px; border-radius:20px; font-size:14px; font-weight:500; cursor:pointer; border:1px solid var(--bd); background:var(--bg-2); color:var(--tx-1); transition:all .15s; }
+.gen-cat-pill:hover { border-color:var(--bd-h); color:var(--tx-0); }
+.gen-cat-pill.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.gen-schema-list { flex:1; overflow-y:auto; margin:0 -8px; padding:0 8px; }
+.gen-schema-item { padding:9px 12px; border-radius:var(--radius-sm); cursor:pointer; color:var(--tx-1); font-size:16px; transition:all .12s; border:1px solid transparent; margin-bottom:2px; }
+.gen-schema-item:hover { background:var(--bg-2); color:var(--tx-0); }
+.gen-schema-item.selected { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-tx); font-weight:500; }
+.gen-schema-cat { font-size:11px; font-weight:600; color:var(--tx-2); text-transform:uppercase; letter-spacing:0.6px; padding:10px 12px 4px; }
+.gen-center { display:flex; flex-direction:column; gap:16px; }
+.gen-schema-panel { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:16px; flex:1; display:flex; flex-direction:column; }
+.gen-schema-panel .code-preview { flex:1; min-height:200px; max-height:380px; }
+.gen-btn-generate { display:block; width:100%; padding:14px; border:none; border-radius:var(--radius-sm); font-size:18px; font-weight:600; font-family:var(--font); cursor:pointer; background:var(--green); color:#fff; transition:all .15s; margin-top:4px; }
+.gen-btn-generate:hover { filter:brightness(1.1); }
+.gen-btn-generate:disabled { opacity:0.5; cursor:not-allowed; filter:none; }
+.gen-push-section { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:16px; }
+.gen-push-header { display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none; }
+.gen-push-header h3 { font-size:17px; font-weight:500; display:flex; align-items:center; gap:8px; }
+.gen-push-body { margin-top:14px; }
+.gen-push-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+
+/* Page sections */
+.section { display:none; }
+.section.active { display:block; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--bg-3); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Gen<span>Forge</span></h1>
+      <p>Test data generation</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-section">Workspace</div>
+      <div class="nav-item" data-page="schemas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8"/></svg>
+        Schema studio
+      </div>
+      <div class="nav-item" data-page="generate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
+        Generate & push
+      </div>
+      <div class="nav-section">Reference</div>
+      <div class="nav-item" data-page="connectors">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+        Connector catalog
+      </div>
+    </nav>
+    <div class="sidebar-footer" style="padding:12px 16px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:8px">
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <span id="theme-label">Light mode</span>
+      </button>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx-2)">
+        <span class="status-dot unknown" id="api-health-dot"></span>
+        <span id="api-health-label">API: checking…</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="badge" id="page-badge"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<!-- Modal container -->
+<div id="modal-root"></div>
+
+<script>
+// =========================================================================
+// State
+// =========================================================================
+const API = 'http://localhost:3800/api';
+const state = {
+  schemas: [],
+  connections: [],
+  jobs: [],
+  stats: { total_schemas:0, total_connections:0, total_jobs:0, records_generated:0, active_jobs:0, connectors_available:[] },
+  currentPage: 'dashboard',
+  _apiUptime: null,
+  _lastPreview: null,
+};
+
+// Real connector targets from GenForge push-to-instance support
+const DEMO_CONNECTORS = [
+  {type:'servicenow',name:'ServiceNow',category:'servicenow',auth_methods:['basic','oauth2','api_key']},
+  {type:'victoriametrics',name:'VictoriaMetrics',category:'observability',auth_methods:['bearer_token','basic']},
+  {type:'cribl',name:'Cribl',category:'observability',auth_methods:['bearer_token','api_key']},
+  {type:'kafka',name:'Apache Kafka',category:'bigdata',auth_methods:['plaintext','sasl_plaintext','ssl','sasl_ssl']},
+  {type:'trino',name:'Trino',category:'bigdata',auth_methods:['basic','certificate']},
+  {type:'elasticsearch',name:'Elasticsearch',category:'observability',auth_methods:['basic','api_key','bearer_token']},
+  {type:'mongodb',name:'MongoDB',category:'database',auth_methods:['basic','certificate']},
+  {type:'clickhouse',name:'ClickHouse',category:'database',auth_methods:['basic']},
+  {type:'redis',name:'Redis',category:'database',auth_methods:['basic','password']},
+  {type:'prometheus',name:'Prometheus Pushgateway',category:'observability',auth_methods:['basic','bearer_token']},
+  {type:'aws_dynamodb',name:'AWS DynamoDB',category:'cloud',auth_methods:['aws_iam','api_key']},
+  {type:'aws_s3',name:'AWS S3',category:'cloud',auth_methods:['aws_iam','api_key']},
+  {type:'aws_sqs',name:'AWS SQS',category:'cloud',auth_methods:['aws_iam','api_key']},
+  {type:'aws_kinesis',name:'AWS Kinesis',category:'cloud',auth_methods:['aws_iam','api_key']},
+];
+
+const DEMO_SCHEMAS = [
+  {id:'s1',name:'ServiceNow Incident',description:'ITSM incident records with priority, state, and assignment fields',category:'servicenow',tags:['itsm','incident'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-02-20T14:12:00Z',
+   schema:{type:'object',properties:{number:{type:'string',pattern:'INC[0-9]{7}'},short_description:{type:'string'},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},urgency:{type:'integer',enum:[1,2,3]},impact:{type:'integer',enum:[1,2,3]},state:{type:'integer',enum:[1,2,3,6,7],'x-datagen-weight':[15,25,20,30,10]},category:{type:'string',enum:['Network','Hardware','Software','Database','Security','Cloud']},assigned_to:{type:'string'},caller_id:{type:'string'},opened_at:{type:'string',format:'date-time'},cmdb_ci:{type:'string'},close_code:{type:'string',enum:['Solved (Work Around)','Solved (Permanently)','Solved Remotely (Work Around)','Solved Remotely (Permanently)','Not Solved (Not Reproducible)','Not Solved (Too Costly)','Closed/Resolved by Caller']},close_notes:{type:'string'}}}},
+  {id:'s2',name:'ServiceNow Change Request',description:'Change management records for ITSM workflows',category:'servicenow',tags:['itsm','change'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-01-10T09:45:00Z',
+   schema:{type:'object',properties:{number:{type:'string',pattern:'CHG[0-9]{7}'},short_description:{type:'string'},type:{type:'string',enum:['Normal','Standard','Emergency'],'x-datagen-weight':[50,35,15]},risk:{type:'string',enum:['High','Moderate','Low']},state:{type:'integer',enum:[-5]},start_date:{type:'string',format:'date-time'},assigned_to:{type:'string'},cmdb_ci:{type:'string'}}}},
+  {id:'s3',name:'ServiceNow CMDB CI',description:'Configuration items for CMDB population',category:'servicenow',tags:['cmdb','ci'],created_at:'2025-12-01T10:00:00Z',updated_at:'2026-03-01T16:20:00Z',
+   schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},name:{type:'string'},sys_class_name:{type:'string',enum:['cmdb_ci_server','cmdb_ci_vm','cmdb_ci_app_server','cmdb_ci_database','cmdb_ci_netgear','cmdb_ci_service']},operational_status:{type:'integer',enum:[1,2,5,6]},ip_address:{type:'string',format:'ipv4'},os:{type:'string',enum:['Linux','Windows Server 2022','RHEL 9','Ubuntu 22.04','VMware ESXi']},environment:{type:'string',enum:['Production','Staging','Development','DR']}}}},
+  {id:'s4',name:'VictoriaMetrics Time Series',description:'Time-series metric samples for VictoriaMetrics import',category:'observability',tags:['victoriametrics','metrics'],created_at:'2025-12-10T11:00:00Z',updated_at:'2026-02-28T13:30:00Z',
+   schema:{type:'object',properties:{metric:{type:'string',enum:['node_cpu_seconds_total','node_memory_MemAvailable_bytes','node_disk_io_time_seconds_total','http_requests_total','process_cpu_seconds_total']},value:{type:'number',minimum:0,maximum:100},timestamp:{type:'string',format:'date-time'},instance:{type:'string'},job:{type:'string',enum:['node-exporter','prometheus','api-server','kubelet']}}}},
+  {id:'s5',name:'Kafka User Activity Events',description:'User activity event stream for Kafka ingestion',category:'bigdata',tags:['kafka','events','streaming'],created_at:'2026-01-05T09:00:00Z',updated_at:'2026-03-10T11:15:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},user_id:{type:'string',format:'uuid'},event_type:{type:'string',enum:['page_view','click','purchase','sign_up','logout','search'],'x-datagen-weight':[40,25,10,5,10,10]},page_url:{type:'string'},session_id:{type:'string',format:'uuid'},ip_address:{type:'string',format:'ipv4'},user_agent:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s6',name:'Elasticsearch Log Entry',description:'Structured application log entries for Elasticsearch indexing',category:'observability',tags:['elasticsearch','logs'],created_at:'2025-11-20T14:00:00Z',updated_at:'2026-03-05T10:00:00Z',
+   schema:{type:'object',properties:{'@timestamp':{type:'string',format:'date-time'},level:{type:'string',enum:['DEBUG','INFO','WARN','ERROR','FATAL'],'x-datagen-weight':[5,60,20,12,3]},message:{type:'string'},service:{type:'string',enum:['api-gateway','auth-service','user-service','payment-service','notification-service']},http_status:{type:'integer',enum:[200,201,301,400,401,403,404,500,502,503]},trace_id:{type:'string'},span_id:{type:'string'},host:{type:'string'}}}},
+  {id:'s7',name:'MongoDB User Profile',description:'User profile documents for MongoDB collections',category:'database',tags:['mongodb','users'],created_at:'2026-01-12T08:00:00Z',updated_at:'2026-03-12T17:45:00Z',
+   schema:{type:'object',properties:{_id:{type:'string',format:'uuid'},username:{type:'string'},email:{type:'string',format:'email'},full_name:{type:'string'},role:{type:'string',enum:['admin','editor','viewer','api_user'],'x-datagen-weight':[5,15,60,20]},department:{type:'string',enum:['Engineering','Operations','Security','Support','Sales','Marketing']},created_at:{type:'string',format:'date-time'},last_login:{type:'string',format:'date-time'},is_active:{type:'boolean'}}}},
+  {id:'s8',name:'AWS CloudWatch Metrics',description:'CloudWatch metric data points for AWS monitoring',category:'cloud',tags:['aws','cloudwatch','metrics'],created_at:'2026-01-20T12:00:00Z',updated_at:'2026-03-15T09:30:00Z',
+   schema:{type:'object',properties:{namespace:{type:'string',enum:['AWS/EC2','AWS/RDS','AWS/ELB','AWS/Lambda','AWS/S3']},metric_name:{type:'string',enum:['CPUUtilization','NetworkIn','NetworkOut','DatabaseConnections','Duration','4xxError','5xxError']},value:{type:'number',minimum:0,maximum:100},unit:{type:'string',enum:['Percent','Bytes','Count','Milliseconds']},timestamp:{type:'string',format:'date-time'},dimensions:{type:'object'}}}},
+  {id:'s9',name:'Cribl Syslog Events',description:'Syslog-formatted events for Cribl Stream ingestion',category:'observability',tags:['cribl','syslog'],created_at:'2026-02-01T10:00:00Z',updated_at:'2026-03-18T14:00:00Z',
+   schema:{type:'object',properties:{timestamp:{type:'string',format:'date-time'},facility:{type:'integer',enum:[0,1,2,3,4,5,6,7]},severity:{type:'integer',enum:[0,1,2,3,4,5,6,7]},hostname:{type:'string'},appname:{type:'string',enum:['sshd','cron','systemd','nginx','kernel','docker']},message:{type:'string'},source_ip:{type:'string',format:'ipv4'}}}},
+  {id:'s10',name:'ClickHouse Web Analytics',description:'Web analytics event data optimized for ClickHouse columnar storage',category:'database',tags:['clickhouse','analytics'],created_at:'2026-02-10T15:00:00Z',updated_at:'2026-03-20T11:00:00Z',
+   schema:{type:'object',properties:{event_date:{type:'string',format:'date'},event_time:{type:'string',format:'date-time'},user_id:{type:'integer',minimum:10000,maximum:99999},session_id:{type:'string',format:'uuid'},page_url:{type:'string'},referrer:{type:'string'},browser:{type:'string',enum:['Chrome','Firefox','Safari','Edge','Opera'],'x-datagen-weight':[55,15,18,10,2]},os:{type:'string',enum:['Windows','macOS','Linux','iOS','Android']},country:{type:'string',enum:['US','GB','DE','FR','JP','IN','BR','CA','AU']},duration_ms:{type:'integer',minimum:100,maximum:300000}}}},
+  {id:'s11',name:'Kubernetes Pod Event',description:'Kubernetes cluster pod lifecycle events for infrastructure monitoring',category:'infra',tags:['kubernetes','pods','events'],created_at:'2026-01-08T10:00:00Z',updated_at:'2026-03-18T16:00:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},namespace:{type:'string',enum:['default','kube-system','monitoring','ingress-nginx','app-prod','app-staging']},pod_name:{type:'string'},node_name:{type:'string'},event_type:{type:'string',enum:['Normal','Warning'],'x-datagen-weight':[75,25]},reason:{type:'string',enum:['Scheduled','Pulling','Pulled','Created','Started','Killing','BackOff','Unhealthy','FailedMount','OOMKilled']},message:{type:'string'},first_seen:{type:'string',format:'date-time'},last_seen:{type:'string',format:'date-time'},count:{type:'integer',minimum:1,maximum:500}}}},
+  {id:'s12',name:'Terraform State Resource',description:'Terraform managed infrastructure resource state entries',category:'infra',tags:['terraform','iac','state'],created_at:'2026-01-15T11:00:00Z',updated_at:'2026-03-10T09:30:00Z',
+   schema:{type:'object',properties:{resource_id:{type:'string',format:'uuid'},type:{type:'string',enum:['aws_instance','aws_security_group','aws_s3_bucket','aws_rds_instance','aws_lambda_function','aws_vpc','aws_subnet','google_compute_instance','azurerm_virtual_machine']},name:{type:'string'},provider:{type:'string',enum:['aws','google','azurerm']},status:{type:'string',enum:['created','updated','destroyed','tainted','imported'],'x-datagen-weight':[40,30,10,10,10]},last_applied:{type:'string',format:'date-time'},drift_detected:{type:'boolean'}}}},
+  {id:'s13',name:'GitHub Actions Workflow Run',description:'CI/CD pipeline execution records from GitHub Actions',category:'cicd',tags:['github','ci','pipeline'],created_at:'2026-02-01T09:00:00Z',updated_at:'2026-03-22T12:00:00Z',
+   schema:{type:'object',properties:{run_id:{type:'integer',minimum:100000,maximum:999999},workflow_name:{type:'string',enum:['CI Build','Deploy Production','Security Scan','Release','Nightly Tests','Lint & Format']},status:{type:'string',enum:['completed','failure','cancelled','in_progress','queued'],'x-datagen-weight':[60,15,5,10,10]},conclusion:{type:'string',enum:['success','failure','cancelled','skipped',null],'x-datagen-weight':[65,20,5,5,5]},branch:{type:'string',enum:['main','develop','feature/auth','feature/api-v2','hotfix/security','release/1.5']},actor:{type:'string'},commit_sha:{type:'string'},duration_seconds:{type:'integer',minimum:10,maximum:3600},started_at:{type:'string',format:'date-time'},repository:{type:'string',enum:['acme/api-server','acme/web-frontend','acme/data-pipeline','acme/infra-config']}}}},
+  {id:'s14',name:'Jenkins Build Record',description:'Jenkins CI build execution data for pipeline analytics',category:'cicd',tags:['jenkins','ci','builds'],created_at:'2026-02-05T14:00:00Z',updated_at:'2026-03-19T10:00:00Z',
+   schema:{type:'object',properties:{build_number:{type:'integer',minimum:1,maximum:9999},job_name:{type:'string',enum:['api-build','frontend-build','integration-tests','deploy-staging','deploy-prod','security-audit','db-migration']},result:{type:'string',enum:['SUCCESS','FAILURE','UNSTABLE','ABORTED','NOT_BUILT'],'x-datagen-weight':[55,20,10,10,5]},duration_ms:{type:'integer',minimum:5000,maximum:1800000},executor_node:{type:'string'},triggered_by:{type:'string',enum:['SCM Change','Timer','Manual','Upstream','API']},timestamp:{type:'string',format:'date-time'},artifact_size_bytes:{type:'integer',minimum:1024,maximum:524288000},test_pass_count:{type:'integer',minimum:0,maximum:2000},test_fail_count:{type:'integer',minimum:0,maximum:50}}}},
+  {id:'s15',name:'Security Audit Event',description:'Security audit trail entries for compliance and threat detection',category:'security',tags:['security','audit','compliance'],created_at:'2026-01-20T08:00:00Z',updated_at:'2026-03-21T15:00:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},timestamp:{type:'string',format:'date-time'},event_type:{type:'string',enum:['login_success','login_failure','privilege_escalation','data_export','config_change','api_key_created','api_key_revoked','mfa_enabled','mfa_disabled','role_assignment']},severity:{type:'string',enum:['critical','high','medium','low','info'],'x-datagen-weight':[3,10,20,30,37]},actor:{type:'string'},actor_ip:{type:'string',format:'ipv4'},resource:{type:'string'},action:{type:'string'},outcome:{type:'string',enum:['success','failure','denied','error'],'x-datagen-weight':[60,15,20,5]},geo_country:{type:'string',enum:['US','GB','DE','FR','JP','CN','RU','BR','IN','AU']}}}},
+  {id:'s16',name:'Network Flow Record',description:'Network traffic flow data for security and performance monitoring',category:'security',tags:['network','flow','traffic'],created_at:'2026-02-12T12:00:00Z',updated_at:'2026-03-20T14:00:00Z',
+   schema:{type:'object',properties:{flow_id:{type:'string',format:'uuid'},src_ip:{type:'string',format:'ipv4'},dst_ip:{type:'string',format:'ipv4'},src_port:{type:'integer',minimum:1024,maximum:65535},dst_port:{type:'integer',enum:[22,53,80,443,3306,5432,6379,8080,8443,9200]},protocol:{type:'string',enum:['TCP','UDP','ICMP'],'x-datagen-weight':[70,25,5]},bytes_sent:{type:'integer',minimum:64,maximum:10485760},bytes_received:{type:'integer',minimum:64,maximum:10485760},packets:{type:'integer',minimum:1,maximum:50000},duration_ms:{type:'integer',minimum:1,maximum:300000},action:{type:'string',enum:['allow','deny','drop','reject'],'x-datagen-weight':[80,10,7,3]},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s17',name:'Redis Cache Operation',description:'Redis cache operation logs for performance profiling',category:'database',tags:['redis','cache','performance'],created_at:'2026-02-15T09:00:00Z',updated_at:'2026-03-22T11:00:00Z',
+   schema:{type:'object',properties:{operation:{type:'string',enum:['GET','SET','DEL','HGET','HSET','LPUSH','RPOP','SADD','ZADD','EXPIRE','TTL','MGET'],'x-datagen-weight':[30,25,5,10,8,5,3,4,3,3,2,2]},key_prefix:{type:'string',enum:['session:','cache:','user:','rate:','lock:','queue:','config:']},latency_us:{type:'integer',minimum:5,maximum:50000},key_size_bytes:{type:'integer',minimum:8,maximum:256},value_size_bytes:{type:'integer',minimum:0,maximum:1048576},hit:{type:'boolean'},database:{type:'integer',enum:[0,1,2,3]},client_ip:{type:'string',format:'ipv4'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s18',name:'Trino Query Log',description:'Trino distributed SQL query execution logs for analytics',category:'bigdata',tags:['trino','sql','analytics'],created_at:'2026-02-08T13:00:00Z',updated_at:'2026-03-19T16:00:00Z',
+   schema:{type:'object',properties:{query_id:{type:'string',format:'uuid'},state:{type:'string',enum:['FINISHED','FAILED','USER_CANCELED','RUNNING'],'x-datagen-weight':[70,15,5,10]},query_type:{type:'string',enum:['SELECT','INSERT','CREATE_TABLE_AS_SELECT','DESCRIBE','SHOW']},catalog:{type:'string',enum:['hive','iceberg','mysql','postgresql','memory']},schema_name:{type:'string',enum:['default','analytics','staging','raw','curated']},user:{type:'string'},source:{type:'string',enum:['jdbc','cli','superset','airflow','dbt']},cpu_time_ms:{type:'integer',minimum:10,maximum:600000},wall_time_ms:{type:'integer',minimum:10,maximum:900000},rows_output:{type:'integer',minimum:0,maximum:10000000},bytes_output:{type:'integer',minimum:0,maximum:1073741824},created_at:{type:'string',format:'date-time'}}}},
+  {id:'s19',name:'AWS S3 Access Log',description:'S3 bucket access logs for auditing and cost analysis',category:'cloud',tags:['aws','s3','access'],created_at:'2026-02-18T10:00:00Z',updated_at:'2026-03-21T13:00:00Z',
+   schema:{type:'object',properties:{request_id:{type:'string'},bucket:{type:'string',enum:['genforge-data','app-assets-prod','logs-archive','backup-daily','ml-datasets']},operation:{type:'string',enum:['REST.GET.OBJECT','REST.PUT.OBJECT','REST.DELETE.OBJECT','REST.HEAD.OBJECT','REST.GET.BUCKET'],'x-datagen-weight':[50,25,5,15,5]},key:{type:'string'},http_status:{type:'integer',enum:[200,204,206,304,403,404,500],'x-datagen-weight':[60,10,5,5,8,10,2]},bytes_sent:{type:'integer',minimum:0,maximum:104857600},total_time_ms:{type:'integer',minimum:5,maximum:30000},requester_ip:{type:'string',format:'ipv4'},user_agent:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s20',name:'Prometheus Alert Record',description:'Prometheus alerting rule evaluation records',category:'observability',tags:['prometheus','alerts','monitoring'],created_at:'2026-02-20T11:00:00Z',updated_at:'2026-03-23T08:00:00Z',
+   schema:{type:'object',properties:{alert_name:{type:'string',enum:['HighCPUUsage','HighMemoryUsage','DiskSpaceLow','PodCrashLooping','HighErrorRate','SlowResponseTime','CertificateExpiring','NodeNotReady','HighNetworkLatency','DatabaseConnectionPoolExhausted']},severity:{type:'string',enum:['critical','warning','info'],'x-datagen-weight':[15,45,40]},state:{type:'string',enum:['firing','resolved','pending'],'x-datagen-weight':[30,50,20]},namespace:{type:'string',enum:['production','staging','monitoring','kube-system']},instance:{type:'string'},value:{type:'number',minimum:0,maximum:100},threshold:{type:'number'},starts_at:{type:'string',format:'date-time'},ends_at:{type:'string',format:'date-time'},labels:{type:'object'}}}},
+  // — Additional ServiceNow schemas —
+  {id:'s21',name:'ServiceNow Problem',description:'Problem management records for root cause analysis',category:'servicenow',tags:['itsm','problem'],created_at:'2026-03-01T08:00:00Z',updated_at:'2026-03-24T10:00:00Z',
+   schema:{type:'object',properties:{number:{type:'string',pattern:'PRB[0-9]{7}'},short_description:{type:'string'},priority:{type:'integer',enum:[1,2,3,4]},state:{type:'integer',enum:[1,2,4,5,6]},category:{type:'string',enum:['Software','Hardware','Network','Database','Security']},first_reported:{type:'string',format:'date-time'},root_cause:{type:'string'},workaround:{type:'string'},assigned_to:{type:'string'},related_incidents:{type:'integer',minimum:1,maximum:50}}}},
+  {id:'s22',name:'ServiceNow Service Request',description:'Service catalog request items for fulfillment workflows',category:'servicenow',tags:['itsm','request'],created_at:'2026-03-02T09:00:00Z',updated_at:'2026-03-24T11:00:00Z',
+   schema:{type:'object',properties:{number:{type:'string',pattern:'REQ[0-9]{7}'},short_description:{type:'string'},request_state:{type:'string',enum:['approved','requested','in_process','closed_complete','closed_incomplete']},priority:{type:'integer',enum:[1,2,3,4]},requested_for:{type:'string'},opened_at:{type:'string',format:'date-time'},delivery_plan:{type:'string'},price:{type:'number',minimum:0,maximum:10000}}}},
+  // — Additional observability schemas —
+  {id:'s23',name:'Grafana Loki Log Stream',description:'Structured log entries for Grafana Loki push API',category:'observability',tags:['loki','logs','grafana'],created_at:'2026-03-03T10:00:00Z',updated_at:'2026-03-24T12:00:00Z',
+   schema:{type:'object',properties:{timestamp:{type:'string',format:'date-time'},stream:{type:'string',enum:['stdout','stderr','syslog','application']},level:{type:'string',enum:['debug','info','warn','error','fatal'],'x-datagen-weight':[5,55,20,15,5]},message:{type:'string'},container:{type:'string',enum:['api-gateway','auth-svc','worker','scheduler','web-ui']},namespace:{type:'string',enum:['production','staging','dev']},pod_name:{type:'string'},node:{type:'string'}}}},
+  {id:'s24',name:'OpenTelemetry Span',description:'Distributed tracing spans in OpenTelemetry format',category:'observability',tags:['opentelemetry','tracing','spans'],created_at:'2026-03-04T08:00:00Z',updated_at:'2026-03-24T14:00:00Z',
+   schema:{type:'object',properties:{trace_id:{type:'string'},span_id:{type:'string'},parent_span_id:{type:'string'},operation_name:{type:'string',enum:['HTTP GET','HTTP POST','db.query','cache.get','grpc.call','queue.publish']},service_name:{type:'string',enum:['api-gateway','user-service','order-service','payment-service','notification-service']},duration_ms:{type:'integer',minimum:1,maximum:30000},status_code:{type:'string',enum:['OK','ERROR','UNSET'],'x-datagen-weight':[85,10,5]},start_time:{type:'string',format:'date-time'},attributes:{type:'object'}}}},
+  // — Additional database schemas —
+  {id:'s25',name:'PostgreSQL Slow Query Log',description:'Slow query entries from PostgreSQL for performance tuning',category:'database',tags:['postgres','slow-query','performance'],created_at:'2026-03-05T09:00:00Z',updated_at:'2026-03-24T15:00:00Z',
+   schema:{type:'object',properties:{query_id:{type:'string',format:'uuid'},duration_ms:{type:'number',minimum:100,maximum:120000},query:{type:'string'},database:{type:'string',enum:['app_prod','app_staging','analytics','reporting']},user_name:{type:'string',enum:['app_rw','app_ro','etl_user','admin','report_user']},rows_returned:{type:'integer',minimum:0,maximum:1000000},temp_files:{type:'integer',minimum:0,maximum:100},shared_blks_hit:{type:'integer',minimum:0,maximum:50000},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s26',name:'MongoDB Aggregation Pipeline',description:'MongoDB aggregation pipeline execution logs',category:'database',tags:['mongodb','aggregation','performance'],created_at:'2026-03-06T10:00:00Z',updated_at:'2026-03-24T16:00:00Z',
+   schema:{type:'object',properties:{operation_id:{type:'string',format:'uuid'},collection:{type:'string',enum:['users','orders','products','sessions','analytics','logs']},pipeline_stages:{type:'integer',minimum:1,maximum:12},docs_examined:{type:'integer',minimum:1,maximum:5000000},docs_returned:{type:'integer',minimum:0,maximum:100000},execution_ms:{type:'integer',minimum:1,maximum:60000},index_used:{type:'boolean'},namespace:{type:'string'},client_ip:{type:'string',format:'ipv4'},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional cloud schemas —
+  {id:'s27',name:'AWS Lambda Invocation',description:'AWS Lambda function invocation records for serverless monitoring',category:'cloud',tags:['aws','lambda','serverless'],created_at:'2026-03-07T11:00:00Z',updated_at:'2026-03-24T17:00:00Z',
+   schema:{type:'object',properties:{request_id:{type:'string',format:'uuid'},function_name:{type:'string',enum:['process-order','send-notification','resize-image','etl-transform','api-handler','auth-validator']},runtime:{type:'string',enum:['python3.12','nodejs20.x','java21','dotnet8']},memory_mb:{type:'integer',enum:[128,256,512,1024,2048]},duration_ms:{type:'integer',minimum:5,maximum:900000},billed_duration_ms:{type:'integer',minimum:100,maximum:900000},cold_start:{type:'boolean'},status:{type:'string',enum:['success','error','timeout'],'x-datagen-weight':[85,10,5]},region:{type:'string',enum:['us-east-1','us-west-2','eu-west-1','ap-southeast-1']},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s28',name:'Azure Resource Event',description:'Azure resource lifecycle and diagnostic events',category:'cloud',tags:['azure','resource','events'],created_at:'2026-03-08T12:00:00Z',updated_at:'2026-03-24T18:00:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},resource_type:{type:'string',enum:['Microsoft.Compute/virtualMachines','Microsoft.Storage/storageAccounts','Microsoft.Sql/servers','Microsoft.Web/sites','Microsoft.ContainerService/managedClusters']},operation:{type:'string',enum:['Write','Delete','Action','Read']},status:{type:'string',enum:['Succeeded','Failed','Started','Accepted'],'x-datagen-weight':[70,10,10,10]},subscription_id:{type:'string',format:'uuid'},resource_group:{type:'string'},level:{type:'string',enum:['Informational','Warning','Error','Critical']},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional security schemas —
+  {id:'s29',name:'SIEM Alert',description:'Security Information and Event Management alert records',category:'security',tags:['siem','alerts','threat'],created_at:'2026-03-09T09:00:00Z',updated_at:'2026-03-24T19:00:00Z',
+   schema:{type:'object',properties:{alert_id:{type:'string',format:'uuid'},rule_name:{type:'string',enum:['Brute Force Attempt','Suspicious Login','Data Exfiltration','Malware Detected','Privilege Escalation','Lateral Movement','C2 Communication','Unauthorized Access','Policy Violation','Anomalous Traffic']},severity:{type:'string',enum:['critical','high','medium','low'],'x-datagen-weight':[5,15,40,40]},source_ip:{type:'string',format:'ipv4'},dest_ip:{type:'string',format:'ipv4'},mitre_tactic:{type:'string',enum:['Initial Access','Execution','Persistence','Privilege Escalation','Defense Evasion','Credential Access','Discovery','Lateral Movement','Collection','Exfiltration']},status:{type:'string',enum:['new','investigating','resolved','false_positive']},analyst:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional CICD schemas —
+  {id:'s30',name:'ArgoCD Sync Event',description:'ArgoCD GitOps application sync events for Kubernetes deployments',category:'cicd',tags:['argocd','gitops','kubernetes'],created_at:'2026-03-10T10:00:00Z',updated_at:'2026-03-24T20:00:00Z',
+   schema:{type:'object',properties:{app_name:{type:'string',enum:['api-server','web-frontend','data-pipeline','auth-service','monitoring-stack','ingress-controller']},project:{type:'string',enum:['default','production','staging','platform']},sync_status:{type:'string',enum:['Synced','OutOfSync','Unknown'],'x-datagen-weight':[70,25,5]},health_status:{type:'string',enum:['Healthy','Degraded','Progressing','Missing','Suspended'],'x-datagen-weight':[65,10,15,5,5]},revision:{type:'string'},source_repo:{type:'string'},cluster:{type:'string',enum:['prod-us-east','prod-eu-west','staging','dev']},sync_started:{type:'string',format:'date-time'},sync_finished:{type:'string',format:'date-time'}}}},
+  // — Additional infra schemas —
+  {id:'s31',name:'Docker Container Event',description:'Docker daemon container lifecycle events',category:'infra',tags:['docker','containers','events'],created_at:'2026-03-11T08:00:00Z',updated_at:'2026-03-24T21:00:00Z',
+   schema:{type:'object',properties:{container_id:{type:'string'},image:{type:'string',enum:['nginx:1.25','postgres:16','redis:7','node:20-alpine','python:3.12-slim','grafana/grafana:latest','prom/prometheus:latest']},event_type:{type:'string',enum:['create','start','stop','die','kill','restart','pause','unpause','oom'],'x-datagen-weight':[15,20,15,10,5,10,5,5,3]},exit_code:{type:'integer',enum:[0,1,137,143]},cpu_pct:{type:'number',minimum:0,maximum:100},memory_mb:{type:'integer',minimum:10,maximum:8192},host:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  // — New category: networking —
+  {id:'s32',name:'DNS Query Log',description:'DNS resolution query logs for network visibility',category:'networking',tags:['dns','queries','network'],created_at:'2026-03-12T09:00:00Z',updated_at:'2026-03-24T22:00:00Z',
+   schema:{type:'object',properties:{query_id:{type:'string',format:'uuid'},domain:{type:'string',enum:['api.example.com','cdn.example.com','auth.example.com','db.internal','cache.internal','mail.example.com']},query_type:{type:'string',enum:['A','AAAA','CNAME','MX','TXT','NS','SOA','PTR'],'x-datagen-weight':[45,15,15,5,8,5,4,3]},response_code:{type:'string',enum:['NOERROR','NXDOMAIN','SERVFAIL','REFUSED'],'x-datagen-weight':[85,8,5,2]},response_time_ms:{type:'number',minimum:0.5,maximum:5000},client_ip:{type:'string',format:'ipv4'},server_ip:{type:'string',format:'ipv4'},cached:{type:'boolean'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s33',name:'Firewall Rule Log',description:'Firewall rule evaluation and action logs',category:'networking',tags:['firewall','rules','security'],created_at:'2026-03-13T10:00:00Z',updated_at:'2026-03-24T23:00:00Z',
+   schema:{type:'object',properties:{rule_id:{type:'string'},rule_name:{type:'string',enum:['Allow-HTTP','Allow-HTTPS','Allow-SSH','Deny-All','Allow-DNS','Allow-VPN','Allow-Internal','Block-GeoIP','Rate-Limit-API']},action:{type:'string',enum:['allow','deny','drop','reject','log'],'x-datagen-weight':[60,15,10,10,5]},protocol:{type:'string',enum:['TCP','UDP','ICMP','GRE'],'x-datagen-weight':[65,25,8,2]},src_ip:{type:'string',format:'ipv4'},dst_ip:{type:'string',format:'ipv4'},src_port:{type:'integer',minimum:1024,maximum:65535},dst_port:{type:'integer',enum:[22,53,80,443,3306,5432,8080,8443]},bytes:{type:'integer',minimum:40,maximum:65535},zone:{type:'string',enum:['external','internal','dmz','management']},timestamp:{type:'string',format:'date-time'}}}},
+  // — New category: messaging —
+  {id:'s34',name:'Slack Audit Event',description:'Slack workspace audit log events for compliance',category:'messaging',tags:['slack','audit','compliance'],created_at:'2026-03-14T08:00:00Z',updated_at:'2026-03-25T08:00:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},action:{type:'string',enum:['user_login','message_posted','file_uploaded','channel_created','member_invited','app_installed','message_deleted','workspace_settings_changed','file_downloaded','role_changed']},actor:{type:'string'},actor_email:{type:'string',format:'email'},channel:{type:'string'},workspace:{type:'string',enum:['Engineering','Operations','Marketing','Support','Executive']},ip_address:{type:'string',format:'ipv4'},user_agent:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s35',name:'Email Gateway Log',description:'Email gateway processing and filtering logs',category:'messaging',tags:['email','gateway','filtering'],created_at:'2026-03-15T09:00:00Z',updated_at:'2026-03-25T09:00:00Z',
+   schema:{type:'object',properties:{message_id:{type:'string',format:'uuid'},sender:{type:'string',format:'email'},recipient:{type:'string',format:'email'},subject:{type:'string'},direction:{type:'string',enum:['inbound','outbound'],'x-datagen-weight':[60,40]},verdict:{type:'string',enum:['clean','spam','phishing','malware','policy_blocked'],'x-datagen-weight':[70,15,5,3,7]},size_bytes:{type:'integer',minimum:500,maximum:26214400},attachments:{type:'integer',minimum:0,maximum:10},spf_result:{type:'string',enum:['pass','fail','softfail','none']},dkim_result:{type:'string',enum:['pass','fail','none']},timestamp:{type:'string',format:'date-time'}}}},
+  // — New category: analytics —
+  {id:'s36',name:'Product Analytics Event',description:'Product usage analytics events for feature tracking',category:'analytics',tags:['product','events','tracking'],created_at:'2026-03-16T10:00:00Z',updated_at:'2026-03-25T10:00:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},user_id:{type:'string',format:'uuid'},event_name:{type:'string',enum:['page_view','button_click','feature_used','search','signup_started','signup_completed','subscription_created','error_encountered','feedback_submitted','export_data']},properties:{type:'object'},session_id:{type:'string',format:'uuid'},platform:{type:'string',enum:['web','ios','android','desktop'],'x-datagen-weight':[50,25,20,5]},app_version:{type:'string',enum:['3.2.0','3.1.5','3.1.4','3.0.0']},country:{type:'string',enum:['US','GB','DE','FR','JP','IN','BR','CA','AU','KR']},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s37',name:'A/B Test Result',description:'A/B experiment test results for data-driven decisions',category:'analytics',tags:['ab-test','experiment','conversion'],created_at:'2026-03-17T11:00:00Z',updated_at:'2026-03-25T11:00:00Z',
+   schema:{type:'object',properties:{experiment_id:{type:'string'},experiment_name:{type:'string',enum:['new_checkout_flow','pricing_page_v2','onboarding_wizard','search_algorithm','email_subject_line','cta_button_color']},variant:{type:'string',enum:['control','treatment_a','treatment_b']},user_id:{type:'string',format:'uuid'},converted:{type:'boolean'},revenue:{type:'number',minimum:0,maximum:500},session_duration_s:{type:'integer',minimum:5,maximum:3600},page_views:{type:'integer',minimum:1,maximum:50},device_type:{type:'string',enum:['desktop','mobile','tablet'],'x-datagen-weight':[45,40,15]},timestamp:{type:'string',format:'date-time'}}}},
+  // — New category: devops —
+  {id:'s38',name:'Incident Response Record',description:'Incident response and on-call management records',category:'devops',tags:['incident','oncall','response'],created_at:'2026-03-18T08:00:00Z',updated_at:'2026-03-25T12:00:00Z',
+   schema:{type:'object',properties:{incident_id:{type:'string'},title:{type:'string'},severity:{type:'string',enum:['SEV1','SEV2','SEV3','SEV4'],'x-datagen-weight':[5,15,40,40]},status:{type:'string',enum:['triggered','acknowledged','resolved','postmortem']},service:{type:'string',enum:['api-gateway','payment-service','auth-service','database','cdn','dns']},commander:{type:'string'},responders:{type:'integer',minimum:1,maximum:12},ttd_minutes:{type:'integer',minimum:1,maximum:60},ttr_minutes:{type:'integer',minimum:5,maximum:1440},customer_impact:{type:'boolean'},created_at:{type:'string',format:'date-time'}}}},
+  {id:'s39',name:'SLO Performance Report',description:'Service Level Objective tracking and performance data',category:'devops',tags:['slo','reliability','performance'],created_at:'2026-03-19T09:00:00Z',updated_at:'2026-03-25T13:00:00Z',
+   schema:{type:'object',properties:{slo_name:{type:'string',enum:['API Availability','API Latency p99','Error Rate','Deployment Success Rate','MTTR','Data Pipeline Freshness']},service:{type:'string',enum:['api-gateway','user-service','order-service','payment-service','data-pipeline','auth-service']},target_pct:{type:'number',enum:[99.9,99.95,99.99,99.5]},actual_pct:{type:'number',minimum:95,maximum:100},budget_remaining_pct:{type:'number',minimum:0,maximum:100},window:{type:'string',enum:['7d','14d','28d','30d']},violations:{type:'integer',minimum:0,maximum:50},period_start:{type:'string',format:'date-time'},period_end:{type:'string',format:'date-time'}}}},
+  // — Additional bigdata schema —
+  {id:'s40',name:'Spark Job Metrics',description:'Apache Spark job execution metrics for cluster monitoring',category:'bigdata',tags:['spark','jobs','cluster'],created_at:'2026-03-20T10:00:00Z',updated_at:'2026-03-25T14:00:00Z',
+   schema:{type:'object',properties:{job_id:{type:'string',format:'uuid'},app_name:{type:'string',enum:['etl-daily','ml-training','data-export','report-gen','stream-processor']},status:{type:'string',enum:['SUCCEEDED','FAILED','RUNNING','KILLED'],'x-datagen-weight':[70,10,15,5]},executor_count:{type:'integer',minimum:1,maximum:100},total_cores:{type:'integer',minimum:2,maximum:400},memory_gb:{type:'integer',minimum:4,maximum:512},input_bytes:{type:'integer',minimum:1048576,maximum:1099511627776},output_bytes:{type:'integer',minimum:1024,maximum:107374182400},duration_s:{type:'integer',minimum:10,maximum:86400},shuffle_write_bytes:{type:'integer',minimum:0,maximum:10737418240},timestamp:{type:'string',format:'date-time'}}}},
+  // — Datacenter Monitoring & Management —
+  {id:'s41',name:'Server CPU & Memory Metrics',description:'Real-time server CPU and memory utilization metrics for datacenter monitoring',category:'datacenter',tags:['server','cpu','memory','monitoring'],created_at:'2026-03-21T08:00:00Z',updated_at:'2026-03-25T15:00:00Z',
+   schema:{type:'object',properties:{hostname:{type:'string'},datacenter:{type:'string',enum:['us-east-dc1','us-west-dc2','eu-central-dc1','ap-south-dc1','us-east-dc3']},rack_id:{type:'string'},cpu_usage_pct:{type:'number',minimum:0,maximum:100},cpu_cores:{type:'integer',enum:[4,8,16,32,64,128]},load_avg_1m:{type:'number',minimum:0,maximum:128},load_avg_5m:{type:'number',minimum:0,maximum:128},memory_total_gb:{type:'integer',enum:[16,32,64,128,256,512]},memory_used_pct:{type:'number',minimum:5,maximum:99},swap_used_pct:{type:'number',minimum:0,maximum:50},uptime_days:{type:'integer',minimum:0,maximum:730},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s42',name:'Disk I/O & Storage Metrics',description:'Disk performance and storage utilization for capacity planning',category:'datacenter',tags:['disk','storage','iops','monitoring'],created_at:'2026-03-21T09:00:00Z',updated_at:'2026-03-25T15:30:00Z',
+   schema:{type:'object',properties:{hostname:{type:'string'},mount_point:{type:'string',enum:['/','//data','//var/log','//opt','//tmp','//home']},filesystem:{type:'string',enum:['ext4','xfs','zfs','btrfs','nfs']},disk_total_gb:{type:'integer',minimum:50,maximum:16000},disk_used_pct:{type:'number',minimum:5,maximum:98},iops_read:{type:'integer',minimum:0,maximum:50000},iops_write:{type:'integer',minimum:0,maximum:30000},throughput_read_mbps:{type:'number',minimum:0,maximum:3000},throughput_write_mbps:{type:'number',minimum:0,maximum:2000},io_wait_pct:{type:'number',minimum:0,maximum:60},disk_latency_ms:{type:'number',minimum:0.1,maximum:200},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s43',name:'IPMI Sensor Reading',description:'Hardware sensor data from IPMI/BMC for datacenter environmental monitoring',category:'datacenter',tags:['ipmi','sensor','hardware','temperature'],created_at:'2026-03-21T10:00:00Z',updated_at:'2026-03-25T16:00:00Z',
+   schema:{type:'object',properties:{hostname:{type:'string'},sensor_name:{type:'string',enum:['CPU1 Temp','CPU2 Temp','System Temp','Peripheral Temp','PCH Temp','DIMM Temp','Inlet Temp','Exhaust Temp','Fan1','Fan2','Fan3','PSU1 Power','PSU2 Power','System Power']},sensor_type:{type:'string',enum:['temperature','fan_speed','voltage','power','current']},value:{type:'number',minimum:0,maximum:500},unit:{type:'string',enum:['°C','RPM','V','W','A']},status:{type:'string',enum:['ok','warning','critical','non-recoverable'],'x-datagen-weight':[80,12,6,2]},threshold_upper:{type:'number'},datacenter:{type:'string',enum:['us-east-dc1','us-west-dc2','eu-central-dc1','ap-south-dc1']},rack_id:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s44',name:'Rack Power & Cooling',description:'Datacenter rack-level power consumption and cooling metrics',category:'datacenter',tags:['rack','power','cooling','pue'],created_at:'2026-03-21T11:00:00Z',updated_at:'2026-03-25T16:30:00Z',
+   schema:{type:'object',properties:{rack_id:{type:'string'},datacenter:{type:'string',enum:['us-east-dc1','us-west-dc2','eu-central-dc1','ap-south-dc1']},row:{type:'string'},power_draw_kw:{type:'number',minimum:2,maximum:30},power_capacity_kw:{type:'integer',enum:[10,15,20,25,30]},inlet_temp_c:{type:'number',minimum:15,maximum:35},outlet_temp_c:{type:'number',minimum:20,maximum:50},humidity_pct:{type:'number',minimum:20,maximum:80},pue:{type:'number',minimum:1.05,maximum:2.5},servers_active:{type:'integer',minimum:1,maximum:48},servers_total:{type:'integer',minimum:20,maximum:48},timestamp:{type:'string',format:'date-time'}}}},
+  // — Server Processes (ps, netstat, etc) —
+  {id:'s45',name:'Process List (ps)',description:'Server process snapshots similar to ps aux output',category:'datacenter',tags:['process','ps','server','linux'],created_at:'2026-03-21T12:00:00Z',updated_at:'2026-03-25T17:00:00Z',
+   schema:{type:'object',properties:{hostname:{type:'string'},pid:{type:'integer',minimum:1,maximum:65535},ppid:{type:'integer',minimum:0,maximum:65535},user:{type:'string',enum:['root','www-data','postgres','redis','mysql','node','app','nobody','systemd-resolve','sshd']},command:{type:'string',enum:['nginx: worker process','postgres: autovacuum','java -jar app.jar','python3 worker.py','node /app/server.js','redis-server *:6379','mysqld --defaults-file','containerd-shim','kubelet','kube-proxy','/usr/sbin/sshd','cron','rsyslogd']},state:{type:'string',enum:['S','R','D','Z','T','I'],'x-datagen-weight':[60,15,8,2,5,10]},cpu_pct:{type:'number',minimum:0,maximum:100},mem_pct:{type:'number',minimum:0,maximum:50},vsz_kb:{type:'integer',minimum:1024,maximum:8388608},rss_kb:{type:'integer',minimum:512,maximum:4194304},nice:{type:'integer',minimum:-20,maximum:19},threads:{type:'integer',minimum:1,maximum:256},started_at:{type:'string',format:'date-time'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s46',name:'Network Connections (netstat/ss)',description:'Active network connection snapshots similar to netstat/ss output',category:'datacenter',tags:['netstat','connections','network','server'],created_at:'2026-03-21T13:00:00Z',updated_at:'2026-03-25T17:30:00Z',
+   schema:{type:'object',properties:{hostname:{type:'string'},protocol:{type:'string',enum:['tcp','tcp6','udp','udp6'],'x-datagen-weight':[50,25,15,10]},local_address:{type:'string',format:'ipv4'},local_port:{type:'integer',enum:[22,53,80,443,3000,3306,5432,6379,8080,8443,9090,9200,27017]},remote_address:{type:'string',format:'ipv4'},remote_port:{type:'integer',minimum:1024,maximum:65535},state:{type:'string',enum:['ESTABLISHED','LISTEN','TIME_WAIT','CLOSE_WAIT','SYN_SENT','SYN_RECV','FIN_WAIT1','FIN_WAIT2','CLOSING','LAST_ACK'],'x-datagen-weight':[40,20,15,8,3,3,3,3,3,2]},pid:{type:'integer',minimum:1,maximum:65535},process_name:{type:'string',enum:['nginx','postgres','redis-server','node','java','python3','sshd','mysqld','mongod','kubelet']},recv_queue:{type:'integer',minimum:0,maximum:65535},send_queue:{type:'integer',minimum:0,maximum:65535},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s47',name:'System Load & Uptime',description:'System-wide load averages, uptime, and kernel stats',category:'datacenter',tags:['load','uptime','system','vmstat'],created_at:'2026-03-21T14:00:00Z',updated_at:'2026-03-25T18:00:00Z',
+   schema:{type:'object',properties:{hostname:{type:'string'},datacenter:{type:'string',enum:['us-east-dc1','us-west-dc2','eu-central-dc1','ap-south-dc1']},uptime_seconds:{type:'integer',minimum:3600,maximum:63072000},load_1m:{type:'number',minimum:0,maximum:128},load_5m:{type:'number',minimum:0,maximum:128},load_15m:{type:'number',minimum:0,maximum:128},processes_running:{type:'integer',minimum:1,maximum:500},processes_total:{type:'integer',minimum:50,maximum:3000},context_switches_per_sec:{type:'integer',minimum:100,maximum:500000},interrupts_per_sec:{type:'integer',minimum:100,maximum:200000},procs_blocked:{type:'integer',minimum:0,maximum:50},kernel_version:{type:'string',enum:['5.15.0','6.1.0','6.5.0','6.8.0']},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional Cloud Services —
+  {id:'s48',name:'GCP Compute Instance Event',description:'Google Cloud Compute Engine instance lifecycle events',category:'cloud',tags:['gcp','compute','events'],created_at:'2026-03-22T08:00:00Z',updated_at:'2026-03-25T19:00:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},instance_name:{type:'string'},project_id:{type:'string'},zone:{type:'string',enum:['us-central1-a','us-east1-b','europe-west1-b','asia-east1-a','us-west1-a']},machine_type:{type:'string',enum:['e2-micro','e2-medium','n2-standard-4','n2-standard-8','c2-standard-16','n2-highmem-32']},status:{type:'string',enum:['RUNNING','STOPPED','TERMINATED','STAGING','SUSPENDED'],'x-datagen-weight':[60,15,10,10,5]},cpu_utilization_pct:{type:'number',minimum:0,maximum:100},network_egress_bytes:{type:'integer',minimum:0,maximum:1073741824},preemptible:{type:'boolean'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s49',name:'AWS ECS Task Event',description:'Amazon ECS container task lifecycle and health events',category:'cloud',tags:['aws','ecs','containers'],created_at:'2026-03-22T09:00:00Z',updated_at:'2026-03-25T19:30:00Z',
+   schema:{type:'object',properties:{task_arn:{type:'string'},cluster:{type:'string',enum:['prod-cluster','staging-cluster','batch-cluster','monitoring-cluster']},service_name:{type:'string',enum:['api-service','worker-service','web-frontend','cron-jobs','event-processor']},desired_status:{type:'string',enum:['RUNNING','STOPPED']},last_status:{type:'string',enum:['RUNNING','STOPPED','PENDING','DEACTIVATING'],'x-datagen-weight':[65,15,15,5]},cpu:{type:'integer',enum:[256,512,1024,2048,4096]},memory_mb:{type:'integer',enum:[512,1024,2048,4096,8192]},health_status:{type:'string',enum:['HEALTHY','UNHEALTHY','UNKNOWN'],'x-datagen-weight':[80,10,10]},launch_type:{type:'string',enum:['FARGATE','EC2']},region:{type:'string',enum:['us-east-1','us-west-2','eu-west-1']},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s50',name:'Cloud Cost & Billing Record',description:'Cloud cost allocation and billing line items for FinOps',category:'cloud',tags:['cost','billing','finops'],created_at:'2026-03-22T10:00:00Z',updated_at:'2026-03-25T20:00:00Z',
+   schema:{type:'object',properties:{line_item_id:{type:'string',format:'uuid'},provider:{type:'string',enum:['AWS','GCP','Azure'],'x-datagen-weight':[50,30,20]},service:{type:'string',enum:['EC2','S3','RDS','Lambda','CloudFront','BigQuery','Compute Engine','Cloud Storage','AKS','Azure SQL']},account_id:{type:'string'},region:{type:'string',enum:['us-east-1','us-west-2','eu-west-1','ap-southeast-1','us-central1']},cost_usd:{type:'number',minimum:0.01,maximum:5000},usage_quantity:{type:'number',minimum:0.001,maximum:100000},usage_unit:{type:'string',enum:['Hours','GB','Requests','GB-Mo','vCPU-Hours']},tags:{type:'object'},billing_period:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional ServiceNow —
+  {id:'s51',name:'ServiceNow Knowledge Article',description:'Knowledge base articles for self-service portal',category:'servicenow',tags:['knowledge','kb','selfservice'],created_at:'2026-03-22T11:00:00Z',updated_at:'2026-03-25T20:30:00Z',
+   schema:{type:'object',properties:{number:{type:'string',pattern:'KB[0-9]{7}'},short_description:{type:'string'},text:{type:'string'},category:{type:'string',enum:['How To','FAQ','Troubleshooting','Reference','Policy','Installation']},workflow_state:{type:'string',enum:['draft','review','published','retired'],'x-datagen-weight':[15,10,65,10]},kb_knowledge_base:{type:'string',enum:['IT','HR','Facilities','Security','General']},author:{type:'string'},view_count:{type:'integer',minimum:0,maximum:50000},rating:{type:'number',minimum:1,maximum:5},published_at:{type:'string',format:'date-time'}}}},
+  // — Additional Infra —
+  {id:'s52',name:'VMware vSphere VM Event',description:'VMware vSphere virtual machine inventory and performance data',category:'infra',tags:['vmware','vsphere','virtualization'],created_at:'2026-03-22T12:00:00Z',updated_at:'2026-03-25T21:00:00Z',
+   schema:{type:'object',properties:{vm_name:{type:'string'},datacenter:{type:'string',enum:['DC-East','DC-West','DC-Europe','DC-APAC']},cluster:{type:'string'},host:{type:'string'},guest_os:{type:'string',enum:['Red Hat Enterprise Linux 9','Ubuntu 22.04','Windows Server 2022','CentOS Stream 9','SLES 15']},power_state:{type:'string',enum:['poweredOn','poweredOff','suspended'],'x-datagen-weight':[80,15,5]},cpu_count:{type:'integer',enum:[2,4,8,16,32]},memory_gb:{type:'integer',enum:[4,8,16,32,64,128]},disk_gb:{type:'integer',minimum:20,maximum:2000},cpu_usage_pct:{type:'number',minimum:0,maximum:100},memory_usage_pct:{type:'number',minimum:5,maximum:98},snapshot_count:{type:'integer',minimum:0,maximum:10},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional Networking —
+  {id:'s53',name:'SNMP Trap Event',description:'SNMP trap notifications from network devices for fault management',category:'networking',tags:['snmp','trap','network','monitoring'],created_at:'2026-03-22T13:00:00Z',updated_at:'2026-03-25T21:30:00Z',
+   schema:{type:'object',properties:{trap_oid:{type:'string'},device_ip:{type:'string',format:'ipv4'},device_name:{type:'string'},device_type:{type:'string',enum:['router','switch','firewall','load_balancer','access_point','ups']},severity:{type:'string',enum:['critical','major','minor','warning','info'],'x-datagen-weight':[5,10,20,30,35]},category:{type:'string',enum:['link_down','link_up','cpu_threshold','memory_threshold','fan_failure','power_supply','bgp_peer','config_change','auth_failure']},description:{type:'string'},community:{type:'string',enum:['public','private','monitoring']},location:{type:'string',enum:['us-east-dc1','us-west-dc2','eu-central-dc1','ap-south-dc1']},timestamp:{type:'string',format:'date-time'}}}},
+  // — Additional Analytics —
+  {id:'s54',name:'Data Pipeline Run',description:'ETL/ELT data pipeline execution records for data engineering',category:'analytics',tags:['pipeline','etl','data-engineering'],created_at:'2026-03-22T14:00:00Z',updated_at:'2026-03-25T22:00:00Z',
+   schema:{type:'object',properties:{run_id:{type:'string',format:'uuid'},pipeline_name:{type:'string',enum:['user_events_daily','revenue_aggregation','product_catalog_sync','clickstream_enrichment','ml_feature_store','data_quality_check','customer_360']},orchestrator:{type:'string',enum:['Airflow','dbt','Dagster','Prefect','Step Functions']},status:{type:'string',enum:['success','failed','running','skipped','upstream_failed'],'x-datagen-weight':[65,12,10,8,5]},rows_processed:{type:'integer',minimum:0,maximum:50000000},duration_s:{type:'integer',minimum:5,maximum:7200},source:{type:'string',enum:['postgres','s3','kafka','api','bigquery']},destination:{type:'string',enum:['snowflake','bigquery','redshift','s3','postgres']},data_freshness_min:{type:'integer',minimum:0,maximum:1440},started_at:{type:'string',format:'date-time'}}}},
+];
+
+state.schemas = DEMO_SCHEMAS;
+state.stats.total_schemas = DEMO_SCHEMAS.length;
+state.stats.connectors_available = DEMO_CONNECTORS;
+
+// =========================================================================
+// Helpers
+// =========================================================================
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const h = (tag,attrs={},children=[]) => {
+  const el = document.createElement(tag);
+  for(const[k,v] of Object.entries(attrs)){
+    if(k==='onclick'||k==='oninput') el[k]=v;
+    else if(k==='html') el.innerHTML=v;
+    else if(k==='text') el.textContent=v;
+    else if(k==='style'&&typeof v==='object') Object.assign(el.style,v);
+    else el.setAttribute(k,v);
+  }
+  for(const c of(Array.isArray(children)?children:[children])){
+    if(typeof c==='string') el.appendChild(document.createTextNode(c));
+    else if(c) el.appendChild(c);
+  }
+  return el;
+};
+const catColor = c => ({database:'blue',observability:'purple',servicenow:'amber',bigdata:'coral',cloud:'teal',cicd:'green',infra:'red',security:'coral',networking:'blue',messaging:'amber',analytics:'teal',devops:'green',datacenter:'red'}[c]||'purple');
+
+// =========================================================================
+// Pages
+// =========================================================================
+
+function renderDashboard(){
+  const s = state.stats;
+  const totalRecs = state.jobs.reduce((a,j)=>a+(j.records_sent||0),0);
+  const completedJobs = state.jobs.filter(j=>j.status==='completed').length;
+  const failedJobs = state.jobs.filter(j=>j.status==='failed').length;
+  const successRate = state.jobs.length ? Math.round((completedJobs/state.jobs.length)*100) : 0;
+  const activeConns = state.connections.filter(c=>c.status==='healthy').length;
+  const catCounts = {};
+  state.schemas.forEach(s=>{ catCounts[s.category]=(catCounts[s.category]||0)+1; });
+  const uptimeStr = state._apiUptime!=null ? (state._apiUptime>=60 ? Math.floor(state._apiUptime/60)+'m '+Math.floor(state._apiUptime%60)+'s' : Math.floor(state._apiUptime)+'s') : '—';
+  return `
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Schemas</div><div class="metric-value accent">${state.schemas.length}</div></div>
+    <div class="metric"><div class="metric-label">Connections</div><div class="metric-value green">${state.connections.length}</div></div>
+    <div class="metric"><div class="metric-label">Active connections</div><div class="metric-value green">${activeConns}</div></div>
+    <div class="metric"><div class="metric-label">Jobs run</div><div class="metric-value">${state.jobs.length}</div></div>
+    <div class="metric"><div class="metric-label">Records generated</div><div class="metric-value amber">${totalRecs.toLocaleString()}</div></div>
+    <div class="metric"><div class="metric-label">Success rate</div><div class="metric-value ${successRate>=80?'green':successRate>=50?'amber':''}" style="${successRate<50&&state.jobs.length?'color:var(--red-tx)':''}">${state.jobs.length?successRate+'%':'—'}</div></div>
+    <div class="metric"><div class="metric-label">Failed jobs</div><div class="metric-value" style="color:var(--red-tx)">${failedJobs}</div></div>
+    <div class="metric"><div class="metric-label">API uptime</div><div class="metric-value" style="font-size:22px">${uptimeStr}</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><div class="card-title">Schema categories</div><span class="tag tag-purple">${Object.keys(catCounts).length} categories</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${Object.entries(catCounts).map(([cat,n])=>`<div style="background:var(--bg-2);border-radius:var(--radius-sm);padding:10px 14px;flex:1;min-width:120px"><div style="font-size:12px;color:var(--tx-2)">${cat}</div><div style="font-size:22px;font-weight:600;color:var(--${catColor(cat)}-tx)">${n}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><div class="card-title">Connections</div><button class="btn btn-sm" onclick="navigate('generate')">Manage</button></div>
+      ${state.connections.length?`<table>
+        <tr><th>Name</th><th>Type</th><th>Status</th></tr>
+        ${state.connections.slice(0,5).map(c=>`<tr><td>${c.name}</td><td><span class="tag tag-${catColor(connectorCategory(c.connector_type))}">${c.connector_type}</span></td><td><span class="status-dot ${c.status||'unknown'}"></span>${c.status||'unknown'}</td></tr>`).join('')}
+      </table>`:'<div style="padding:16px;text-align:center;color:var(--tx-2);font-size:14px">No connections yet. <a href="#" onclick="navigate(\'generate\');return false" style="color:var(--accent-tx)">Add one</a></div>'}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Available connectors</div><span class="tag tag-purple">${DEMO_CONNECTORS.length} targets</span></div>
+    <div class="connector-grid">
+      ${DEMO_CONNECTORS.map(c=>`<div class="connector-card"><div class="name">${c.name}</div><div class="cat"><span class="tag tag-${catColor(c.category)}">${c.category}</span></div></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Recent schemas</div><button class="btn btn-sm" onclick="navigate('schemas')">View all</button></div>
+    <table>
+      <tr><th>Name</th><th>Category</th><th>Fields</th></tr>
+      ${state.schemas.slice(0,8).map(s=>`<tr><td>${s.name}</td><td><span class="tag tag-${catColor(s.category)}">${s.category}</span></td><td>${Object.keys(s.schema.properties||{}).length}</td></tr>`).join('')}
+    </table>
+  </div>
+
+  <div class="gen-push-section">
+    <div class="gen-push-header" onclick="const b=this.nextElementSibling;const open=b.style.display!=='none';b.style.display=open?'none':'block';this.querySelector('.arrow').textContent=open?'▼':'▲'">
+      <h3>&#9881; Job Monitor <span style="font-weight:400;font-size:13px;color:var(--tx-2)">(${state.jobs.length} jobs)</span> <span class="arrow" style="font-size:12px;color:var(--tx-2)">▼</span></h3>
+    </div>
+    <div class="gen-push-body" style="display:none">
+      ${state.jobs.length ? `<table>
+        <tr><th>ID</th><th>Schema</th><th>Status</th><th>Records</th><th>Duration</th><th>Time</th></tr>
+        ${state.jobs.map(j=>{
+          const schema = state.schemas.find(s=>s.id===j.schema_id);
+          const statusTag = j.status==='completed'?'green':j.status==='failed'?'red':j.status==='running'?'amber':'purple';
+          return `<tr>
+            <td style="font-family:var(--mono);font-size:12px">${j.id}</td>
+            <td>${schema?schema.name:j.schema_id}</td>
+            <td><span class="tag tag-${statusTag}">${j.status}</span></td>
+            <td>${(j.records_sent||0).toLocaleString()}${j.records_failed?` / <span style="color:var(--red-tx)">${j.records_failed} failed</span>`:''}</td>
+            <td>${j.duration_seconds?j.duration_seconds+'s':'—'}</td>
+            <td style="font-size:12px;color:var(--tx-2)">${j.started_at?new Date(j.started_at).toLocaleTimeString():'—'}</td>
+          </tr>`;
+        }).join('')}
+      </table>` : '<div style="padding:16px;text-align:center;color:var(--tx-2);font-size:14px">No jobs yet. <a href="#" onclick="navigate(\'generate\');return false" style="color:var(--accent-tx)">Generate data</a> to see job history.</div>'}
+    </div>
+  </div>`;
+}
+
+let _schemaFilter = 'all';
+function renderSchemas(){
+  if(!state.schemas.length) return `<div class="empty"><p>No schemas yet. Create one to get started.</p><button class="btn btn-primary" style="margin-top:12px" onclick="openSchemaModal()">Create schema</button></div>`;
+  const cats = ['all',...[...new Set(state.schemas.map(s=>s.category))].sort((a,b)=>a.localeCompare(b))];
+  const filtered = _schemaFilter==='all' ? state.schemas : state.schemas.filter(s=>s.category===_schemaFilter);
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${cats.map(c=>`<button class="btn btn-sm${_schemaFilter===c?' btn-primary':''}" onclick="_schemaFilter='${c}';render()">${c==='all'?'All':c}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn" onclick="loadSchemaFromFile()">Load from file</button>
+      <button class="btn btn-primary" onclick="openSchemaModal()">+ New schema</button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--tx-2);margin-bottom:12px">${filtered.length} of ${state.schemas.length} schemas</div>
+  ${filtered.map(s=>`
+  <div class="card" style="cursor:pointer" onclick='viewSchema("${s.id}")'>
+    <div class="card-header">
+      <div><div class="card-title">${s.name}</div><div class="card-subtitle">${s.description||'No description'}</div></div>
+      <span class="tag tag-${catColor(s.category)}">${s.category}</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${Object.keys(s.schema.properties||{}).slice(0,8).map(f=>`<span style="font-size:11px;background:var(--bg-2);padding:2px 8px;border-radius:4px;color:var(--tx-2)">${f}</span>`).join('')}
+      ${Object.keys(s.schema.properties||{}).length>8?`<span style="font-size:11px;color:var(--tx-2)">+${Object.keys(s.schema.properties).length-8} more</span>`:''}
+    </div>
+  </div>`).join('')}`;
+}
+
+function renderConnections(){
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="font-size:13px;color:var(--tx-2)">${state.connections.length} connections</div>
+    <button class="btn btn-primary" onclick="openConnectionModal()">+ New connection</button>
+  </div>
+  ${!state.connections.length?'<div class="empty"><p>No connections configured yet.</p></div>':''}
+  ${state.connections.map(c=>`
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title"><span class="status-dot ${c.status||'unknown'}"></span>${c.name}</div>
+        <div class="card-subtitle">${c.connector_type} — ${c.host}${c.port?':'+c.port:''}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick='testConnection("${c.id}")'>Test</button>
+        <button class="btn btn-sm btn-danger" onclick='deleteConnection("${c.id}")'>Delete</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="tag tag-${catColor(connectorCategory(c.connector_type))}">${c.connector_type}</span>
+      <span class="tag tag-blue">${c.auth_method}</span>
+      <span class="tag tag-${c.environment==='production'?'red':'green'}">${c.environment}</span>
+    </div>
+  </div>`).join('')}`;
+}
+
+let _genCatFilter = 'all';
+let _genSelectedSchema = null;
+
+function _genSelectSchema(id){
+  _genSelectedSchema = id;
+  render();
+}
+
+function _genSetCatFilter(cat){
+  _genCatFilter = cat;
+  render();
+}
+
+function _updatePreviewBtn(){
+  const btn = document.getElementById('gen-preview-btn');
+  const count = parseInt(document.getElementById('gen-count')?.value || '0');
+  if(btn){
+    btn.disabled = count >= 100 || !_genSelectedSchema;
+    btn.title = count >= 100 ? 'Preview is only available when record count is under 100' : '';
+  }
+}
+
+// Connector-type to tables/targets mapping with REST API paths
+const _connectorTargets = {
+  servicenow: [
+    {table:'incident', label:'Incident', api:'/api/now/table/incident'},
+    {table:'change_request', label:'Change Request', api:'/api/now/table/change_request'},
+    {table:'problem', label:'Problem', api:'/api/now/table/problem'},
+    {table:'sc_request', label:'Service Request', api:'/api/now/table/sc_request'},
+    {table:'sc_req_item', label:'Request Item (RITM)', api:'/api/now/table/sc_req_item'},
+    {table:'cmdb_ci', label:'CMDB CI', api:'/api/now/table/cmdb_ci'},
+    {table:'cmdb_ci_server', label:'CMDB Server', api:'/api/now/table/cmdb_ci_server'},
+    {table:'cmdb_ci_vm_instance', label:'CMDB VM Instance', api:'/api/now/table/cmdb_ci_vm_instance'},
+    {table:'csm_case', label:'Customer Case (CSM)', api:'/api/now/table/sn_customerservice_case'},
+    {table:'kb_knowledge', label:'Knowledge Article', api:'/api/now/table/kb_knowledge'},
+    {table:'em_alert', label:'Event Alert', api:'/api/now/table/em_alert'},
+    {table:'sn_si_incident', label:'Security Incident', api:'/api/now/table/sn_si_incident'},
+    {table:'sys_user', label:'User', api:'/api/now/table/sys_user'},
+    {table:'sys_user_group', label:'Group', api:'/api/now/table/sys_user_group'},
+    {table:'task', label:'Task', api:'/api/now/table/task'},
+  ],
+  elasticsearch: [
+    {table:'_doc', label:'Document (index/_doc)', api:'/{index}/_doc'},
+    {table:'_bulk', label:'Bulk insert (/_bulk)', api:'/_bulk'},
+  ],
+  mongodb: [
+    {table:'insertOne', label:'Insert One', api:'/action/insertOne'},
+    {table:'insertMany', label:'Insert Many', api:'/action/insertMany'},
+  ],
+  postgres: [
+    {table:'sql_insert', label:'SQL INSERT', api:'/query'},
+  ],
+  kafka: [
+    {table:'produce', label:'Produce message', api:'/topics/{topic}'},
+  ],
+  victoriametrics: [
+    {table:'import', label:'Import (JSON)', api:'/api/v1/import'},
+    {table:'write', label:'Write (Prometheus)', api:'/api/v1/write'},
+  ],
+  cribl: [
+    {table:'events', label:'Send events', api:'/api/v1/events'},
+  ],
+  prometheus: [
+    {table:'metrics', label:'Push metrics', api:'/metrics/job/{job}'},
+  ],
+  grafana_loki: [
+    {table:'push', label:'Push log entries', api:'/loki/api/v1/push'},
+  ],
+  redis: [
+    {table:'set', label:'SET key/value', api:'/SET'},
+    {table:'lpush', label:'LPUSH list', api:'/LPUSH'},
+    {table:'hset', label:'HSET hash', api:'/HSET'},
+  ],
+  clickhouse: [
+    {table:'insert', label:'INSERT query', api:'/?query=INSERT+INTO+{table}+FORMAT+JSONEachRow'},
+  ],
+  aws_s3: [
+    {table:'putObject', label:'PUT Object', api:'/{bucket}/{key}'},
+  ],
+  aws_dynamodb: [
+    {table:'putItem', label:'PutItem', api:'/'},
+  ],
+  trino: [
+    {table:'insert', label:'INSERT statement', api:'/v1/statement'},
+  ],
+};
+
+function _getTargetsForConnection(connId){
+  const c = state.connections.find(x=>x.id===connId);
+  if(!c) return [];
+  return _connectorTargets[c.connector_type] || [{table:'default',label:'Default',api:'/'}];
+}
+
+function _populateTargetTables(){
+  const connId = document.getElementById('gen-connection')?.value;
+  const tableSelect = document.getElementById('gen-push-table');
+  const hint = document.getElementById('gen-push-api-hint');
+  if(!tableSelect) return;
+  tableSelect.innerHTML = '<option value="">Select a table...</option>';
+  if(hint) hint.textContent = '';
+  if(!connId) return;
+  const targets = _getTargetsForConnection(connId);
+  targets.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.table;
+    opt.textContent = t.label + ' (' + t.table + ')';
+    opt.dataset.api = t.api;
+    tableSelect.appendChild(opt);
+  });
+}
+
+function _updatePushApiHint(){
+  const tableSelect = document.getElementById('gen-push-table');
+  const hint = document.getElementById('gen-push-api-hint');
+  const connId = document.getElementById('gen-connection')?.value;
+  if(!hint || !tableSelect) return;
+  const selected = tableSelect.options[tableSelect.selectedIndex];
+  if(selected && selected.dataset.api){
+    const c = state.connections.find(x=>x.id===connId);
+    const protocol = c && c.host.startsWith('http') ? '' : 'https://';
+    const base = c ? `${protocol}${c.host}${c.port?':'+c.port:''}` : '';
+    hint.textContent = 'POST ' + base + selected.dataset.api;
+  } else {
+    hint.textContent = '';
+  }
+}
+
+const _targetColors = {servicenow:'#e74c3c',victoriametrics:'#e74c3c',cribl:'#2563eb',kafka:'#d48c20',trino:'#6c5ce7',elasticsearch:'#00a884',mongodb:'#00a884',clickhouse:'#e74c3c',prometheus:'#e74c3c',grafana_loki:'#d48c20',redis:'#d94040',server_os:'#2563eb',nytro_mxdr:'#6c5ce7',opentelemetry:'#0d7d73',youtube:'#e74c3c',slack:'#6c5ce7',aws:'#d48c20',database:'#e74c3c',kubernetes:'#2563eb',sqs:'#d48c20',kinesis:'#d48c20',s3:'#00a884',dynamodb:'#d48c20',social_media:'#e74c3c',jira:'#2563eb',ecommerce:'#00a884'};
+
+function renderGenerate(){
+  // Group schemas by category, sort each group alphabetically
+  const schemaCats = {};
+  state.schemas.forEach(s => {
+    const cat = s.category || 'custom';
+    if(!schemaCats[cat]) schemaCats[cat] = [];
+    schemaCats[cat].push(s);
+  });
+  // Sort schemas alphabetically within each category
+  for(const cat in schemaCats) schemaCats[cat].sort((a,b) => a.name.localeCompare(b.name));
+  // Sort categories alphabetically
+  const sortedCats = Object.keys(schemaCats).sort((a,b) => a.localeCompare(b));
+  const allCatsWithCounts = sortedCats.map(c => ({name:c, count:schemaCats[c].length}));
+
+  // Selected schema
+  const sel = _genSelectedSchema ? state.schemas.find(x=>x.id===_genSelectedSchema) : null;
+
+  return `
+  <div class="gen-layout">
+    <!-- LEFT: Schema Templates -->
+    <div class="gen-templates">
+      <div class="gen-templates-header">Schema Templates <span class="count">${state.schemas.length} templates</span></div>
+      <div class="gen-cat-pills">
+        <span class="gen-cat-pill${_genCatFilter==='all'?' active':''}" onclick="_genSetCatFilter('all')">All (${state.schemas.length})</span>
+        ${allCatsWithCounts.map(c => `<span class="gen-cat-pill${_genCatFilter===c.name?' active':''}" onclick="_genSetCatFilter('${c.name}')">${c.name.charAt(0).toUpperCase()+c.name.slice(1)} (${c.count})</span>`).join('')}
+      </div>
+      <div class="gen-schema-list">
+        ${sortedCats.filter(c => _genCatFilter==='all' || c===_genCatFilter).map(cat => `
+          <div class="gen-schema-cat">${cat} (${schemaCats[cat].length})</div>
+          ${schemaCats[cat].map(s => `<div class="gen-schema-item${_genSelectedSchema===s.id?' selected':''}" onclick="_genSelectSchema('${s.id}')">${s.name}</div>`).join('')}
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- RIGHT: Data Schema + Controls -->
+    <div class="gen-center">
+      <div class="gen-schema-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:15px;font-weight:500">${sel ? sel.name : 'Data Schema'}${sel ? ` <span style="font-size:12px;color:var(--tx-2);font-weight:400">${Object.keys(sel.schema.properties||{}).length} fields &middot; ${sel.category}</span>` : ''}</div>
+          <button class="btn btn-sm" onclick="loadSchemaFromFile()">Load Schema File</button>
+        </div>
+        <div class="code-preview" id="gen-schema-json" style="flex:1;min-height:180px;max-height:300px">${sel ? JSON.stringify(sel.schema,null,2) : '{\n  // Select a template from the left panel,\n  // or load a schema file\n}'}</div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:flex-end">
+        <div class="form-group" style="margin:0;flex:1">
+          <label>Record Count</label>
+          <input type="number" id="gen-count" value="50" min="1" max="100000" oninput="_updatePreviewBtn()">
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;margin:0 0 2px;cursor:pointer;font-size:14px;color:var(--tx-1);white-space:nowrap">
+          <input type="checkbox" id="gen-edge" style="width:auto" checked> Include Edge Cases (<span id="gen-edge-pct-display">5</span>%)
+        </label>
+        <input type="number" id="gen-edge-pct" style="width:56px;text-align:center;margin-bottom:0" value="5" min="1" max="50" oninput="const d=document.getElementById('gen-edge-pct-display');if(d)d.textContent=this.value">
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="gen-btn-generate" onclick="runGenerate()" ${sel?'':'disabled'}>Generate Data</button>
+        <button class="btn" style="padding:14px 20px;font-size:15px" id="gen-preview-btn" onclick="runPreview()" ${sel?'':'disabled'} title="Preview is available when record count is under 100">Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connections + Push to Instance side by side -->
+  <div style="display:grid;grid-template-columns:2fr 3fr;gap:16px">
+    <!-- Connections -->
+    <div class="gen-push-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="font-size:16px;font-weight:500">&#128279; Connections <span style="font-weight:400;font-size:13px;color:var(--tx-2)">(${state.connections.length})</span></h3>
+        <button class="btn btn-sm btn-primary" onclick="openConnectionModal()">+ New connection</button>
+      </div>
+      <div style="max-height:220px;overflow-y:auto">
+      ${state.connections.length ? state.connections.map(c=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-2);border-radius:var(--radius-sm);margin-bottom:6px">
+        <div>
+          <div style="font-size:14px;font-weight:500"><span class="status-dot ${c.status||'unknown'}"></span>${c.name}</div>
+          <div style="font-size:12px;color:var(--tx-2)">${c.connector_type} — ${c.host}${c.port?':'+c.port:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="tag tag-${catColor(connectorCategory(c.connector_type))}">${c.connector_type}</span>
+          <button class="btn btn-sm" onclick='testConnection("${c.id}")'>Test</button>
+          <button class="btn btn-sm btn-danger" onclick='deleteConnection("${c.id}")'>Delete</button>
+        </div>
+      </div>`).join('') : '<div style="padding:16px;text-align:center;color:var(--tx-2);font-size:14px">No connections yet. Click <strong>+ New connection</strong> to add one.</div>'}
+      </div>
+    </div>
+
+    <!-- Push to Instance -->
+    <div class="gen-push-section">
+      <h3 style="font-size:16px;font-weight:500;margin-bottom:12px">&#8593; Push to Instance</h3>
+      <div class="form-group">
+        <label>Target connection</label>
+        <select id="gen-connection" onchange="_populateTargetTables()">
+          <option value="">Select a connection...</option>
+          ${state.connections.map(c=>`<option value="${c.id}">${c.name} (${c.connector_type})</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Table / Target</label>
+        <select id="gen-push-table" onchange="_updatePushApiHint()">
+          <option value="">Select a table...</option>
+        </select>
+        <div id="gen-push-api-hint" style="font-size:12px;color:var(--tx-2);margin-top:4px;font-family:var(--mono)"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="gen-btn-generate" onclick="runPush()" ${sel?'':'disabled'} style="background:var(--accent)">Push to Instance</button>
+      </div>
+      <div id="gen-push-status" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- Hidden select to preserve gen-schema ID for runPreview/runGenerate -->
+  <select id="gen-schema" style="display:none">${state.schemas.map(s=>`<option value="${s.id}"${_genSelectedSchema===s.id?' selected':''}>${s.name}</option>`).join('')}</select>
+
+  <div id="gen-output" style="margin-top:16px"></div>`;
+}
+
+function renderJobs(){
+  if(!state.jobs.length) return '<div class="empty"><p>No jobs yet. Generate some data to see jobs here.</p></div>';
+  return `
+  <table>
+    <tr><th>ID</th><th>Schema</th><th>Status</th><th>Records</th><th>Duration</th><th>Time</th></tr>
+    ${state.jobs.map(j=>{
+      const schema = state.schemas.find(s=>s.id===j.schema_id);
+      const statusTag = j.status==='completed'?'green':j.status==='failed'?'red':j.status==='running'?'amber':'purple';
+      return `<tr>
+        <td style="font-family:var(--mono);font-size:12px">${j.id}</td>
+        <td>${schema?schema.name:j.schema_id}</td>
+        <td><span class="tag tag-${statusTag}">${j.status}</span></td>
+        <td>${(j.records_sent||0).toLocaleString()}${j.records_failed?` / <span style="color:var(--red-tx)">${j.records_failed} failed</span>`:''}</td>
+        <td>${j.duration_seconds?j.duration_seconds+'s':'—'}</td>
+        <td style="font-size:12px;color:var(--tx-2)">${j.started_at?new Date(j.started_at).toLocaleTimeString():'—'}</td>
+      </tr>`;
+    }).join('')}
+  </table>`;
+}
+
+function renderConnectorCatalog(){
+  const cats = [...new Set(DEMO_CONNECTORS.map(c=>c.category))].sort();
+  return cats.map(cat=>`
+  <div class="card">
+    <div class="card-header"><div class="card-title" style="text-transform:capitalize">${cat}</div><span class="tag tag-${catColor(cat)}">${DEMO_CONNECTORS.filter(c=>c.category===cat).length}</span></div>
+    <table>
+      <tr><th>Connector</th><th>Type</th><th>Auth methods</th></tr>
+      ${DEMO_CONNECTORS.filter(c=>c.category===cat).sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
+      <tr>
+        <td style="font-weight:500">${c.name}</td>
+        <td style="font-family:var(--mono);font-size:14px">${c.type}</td>
+        <td>${c.auth_methods.map(a=>`<span class="tag tag-blue" style="margin:1px">${a}</span>`).join(' ')}</td>
+      </tr>`).join('')}
+    </table>
+  </div>`).join('');
+}
+
+// =========================================================================
+// Actions
+// =========================================================================
+
+function navigate(page){
+  state.currentPage = page;
+  $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
+  const titles = {dashboard:'Dashboard',schemas:'Schema studio',generate:'Generate & push',connectors:'Connector catalog'};
+  $('#page-title').textContent = titles[page]||page;
+  render();
+}
+
+function render(){
+  const pages = {dashboard:renderDashboard,schemas:renderSchemas,generate:renderGenerate,connectors:renderConnectorCatalog};
+  $('#content').innerHTML = (pages[state.currentPage]||renderDashboard)();
+}
+
+function connectorCategory(type){
+  const c = DEMO_CONNECTORS.find(x=>x.type===type);
+  return c?c.category:'generic';
+}
+
+function openSchemaModal(){
+  const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
+  const modal = h('div',{class:'modal',html:`
+    <h3>Create schema</h3>
+    <div class="form-group"><label>Name</label><input id="m-name" placeholder="e.g. ServiceNow Incident"></div>
+    <div class="form-group"><label>Description</label><input id="m-desc" placeholder="Test data for..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select id="m-cat"><option>servicenow</option><option>observability</option><option>database</option><option>cloud</option><option>bigdata</option><option>cicd</option><option>infra</option><option>custom</option></select>
+      </div>
+      <div class="form-group"><label>Tags (comma-separated)</label><input id="m-tags" placeholder="itsm, incident"></div>
+    </div>
+    <div class="form-group"><label>JSON Schema</label>
+      <textarea id="m-schema" rows="12" placeholder='{"type":"object","properties":{...}}'></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSchema()">Create</button>
+    </div>
+  `});
+  overlay.appendChild(modal);
+  $('#modal-root').appendChild(overlay);
+}
+
+function saveSchema(){
+  const name=$('#m-name').value, desc=$('#m-desc').value, cat=$('#m-cat').value;
+  const tags=$('#m-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  let schema;
+  try { schema = JSON.parse($('#m-schema').value); } catch(e){ alert('Invalid JSON: '+e.message); return; }
+  const entry = {id:'s'+Date.now(),name,description:desc,category:cat,tags,schema,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+  state.schemas.push(entry);
+  $('.modal-overlay').remove();
+  render();
+}
+
+function viewSchema(id){
+  const s = state.schemas.find(x=>x.id===id);
+  if(!s) return;
+  const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
+  const modal = h('div',{class:'modal',html:`
+    <h3>${s.name}</h3>
+    <p style="font-size:12px;color:var(--tx-2);margin-bottom:12px">${s.description||'No description'}</p>
+    <div style="margin-bottom:12px">${s.tags.map(t=>`<span class="tag tag-purple">${t}</span>`).join(' ')}</div>
+    <div class="code-preview">${JSON.stringify(s.schema,null,2)}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">Close</button>
+      <button class="btn btn-primary" onclick="navigate('generate');this.closest('.modal-overlay').remove()">Use in generator</button>
+    </div>
+  `});
+  overlay.appendChild(modal);
+  $('#modal-root').appendChild(overlay);
+}
+
+function openConnectionModal(){
+  const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
+  const modal = h('div',{class:'modal',html:`
+    <h3>New connection</h3>
+    <div class="form-group"><label>Name</label><input id="mc-name" placeholder="e.g. SNOW Dev Instance"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Connector type</label>
+        <select id="mc-type">${DEMO_CONNECTORS.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label>Environment</label>
+        <select id="mc-env"><option>development</option><option>staging</option><option>production</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Host</label><input id="mc-host" placeholder="dev12345.service-now.com"></div>
+      <div class="form-group"><label>Port (optional)</label><input id="mc-port" type="number" placeholder=""></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Auth method</label>
+        <select id="mc-auth"><option value="basic">Basic auth</option><option value="api_key">API key</option><option value="oauth2">OAuth 2.0</option><option value="bearer_token">Bearer token</option><option value="aws_iam">AWS IAM</option></select>
+      </div>
+      <div class="form-group"><label>Username / Access key</label><input id="mc-user" placeholder=""></div>
+    </div>
+    <div class="form-group"><label>Password / Secret / Token</label><input id="mc-pass" type="password" placeholder=""></div>
+    <div class="form-group"><label>Options (JSON)</label><textarea id="mc-opts" rows="3" placeholder='{"table":"incident"}'>{}</textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveConnection()">Create</button>
+    </div>
+  `});
+  overlay.appendChild(modal);
+  $('#modal-root').appendChild(overlay);
+}
+
+function saveConnection(){
+  let opts;
+  try { opts=JSON.parse($('#mc-opts').value); } catch(e){ opts={}; }
+  const entry = {
+    id:'c'+Date.now(), name:$('#mc-name').value, connector_type:$('#mc-type').value,
+    host:$('#mc-host').value, port:$('#mc-port').value?parseInt($('#mc-port').value):null,
+    auth_method:$('#mc-auth').value,
+    credentials:{username:$('#mc-user').value,password:$('#mc-pass').value},
+    options:opts, environment:$('#mc-env').value, status:'healthy', created_at:new Date().toISOString()
+  };
+  state.connections.push(entry);
+  $('.modal-overlay').remove();
+  render();
+}
+
+function testConnection(id){
+  const c = state.connections.find(x=>x.id===id);
+  if(!c) return;
+  c.status = 'healthy';  // Simulated
+  render();
+}
+
+function deleteConnection(id){
+  state.connections = state.connections.filter(x=>x.id!==id);
+  render();
+}
+
+function loadSchemaFromFile(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,.schema';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const raw = JSON.parse(ev.target.result);
+        // Support both wrapped format {name, schema:{...}} and raw JSON Schema
+        let schema, name, desc, cat, tags;
+        if(raw.type==='object' && raw.properties) {
+          schema = raw;
+          name = raw.title || file.name.replace(/\.(json|schema)$/,'').replace(/[_-]/g,' ');
+          desc = raw.description || '';
+          cat = raw['x-datagen-category'] || 'custom';
+          tags = raw['x-datagen-tags'] || [];
+        } else if(raw.schema) {
+          schema = raw.schema;
+          name = raw.name || raw.title || file.name.replace(/\.(json|schema)$/,'').replace(/[_-]/g,' ');
+          desc = raw.description || '';
+          cat = raw.category || raw.schema['x-datagen-category'] || 'custom';
+          tags = raw.tags || raw.schema['x-datagen-tags'] || [];
+        } else {
+          alert('File does not appear to be a valid JSON Schema. Expected {"type":"object","properties":{...}}');
+          return;
+        }
+        const entry = {id:'s'+Date.now(),name,description:desc,category:cat,tags:Array.isArray(tags)?tags:[],schema,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+        state.schemas.push(entry);
+        render();
+      } catch(err) {
+        alert('Failed to parse JSON file: '+err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Realistic value generators for preview (no fake/sample data)
+const _names = ['Alice Chen','Bob Martinez','Carol Johnson','David Kim','Eva Patel','Frank Wilson','Grace Lee','Hassan Ahmed','Irene Costa','Jake Murphy'];
+const _emails = ['alice.chen@acme.com','bob.martinez@globex.net','carol.j@initech.io','david.kim@umbrella.co','eva.patel@waynetech.com','frank.w@stark.dev','grace.lee@oscorp.io','hassan.a@lexcorp.com','irene.costa@cyberdyne.net','jake.murphy@aperture.co'];
+const _domains = ['web-prod-01.us-east.acme.com','db-replica-03.eu-west.globex.net','api-gw-02.ap-south.initech.io','cache-node-05.us-west.umbrella.co','worker-12.eu-central.waynetech.com'];
+const _ips = ['10.0.1.42','10.0.2.118','172.16.4.200','192.168.1.55','10.0.3.87','172.16.8.15','10.0.5.201','192.168.10.33','10.0.7.64','172.16.12.99'];
+const _descs = ['Unable to access VPN after password rotation','Disk space critical on production DB server','SSL certificate expiring within 7 days','Memory leak detected in payment-service pod','Intermittent 502 errors on /api/v2/orders endpoint','Scheduled maintenance for core switch upgrade','Deploy updated TLS certs to load balancer cluster','Database failover drill for DR compliance','Migrate CI/CD pipeline to new runner fleet','Upgrade Kubernetes cluster from 1.28 to 1.30'];
+const _urls = ['/dashboard','/api/v2/users','/api/v2/orders','/settings/profile','/reports/monthly','/api/v1/health','/search?q=incidents','/admin/audit-log'];
+const _agents = ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/122.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/123.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/121.0','Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) Safari/604.1'];
+const _msgs = ['Request processed successfully in 142ms','User bob.martinez authenticated from 10.0.2.118','Connection pool at 87% capacity','Failed to connect to database: timeout after 12s','Cache hit for key a3f8b2c1d4e5','Rate limit approaching for client 172.16.4.200','Health check passed for api-gateway','Slow query detected: 3200ms on SELECT from orders'];
+const _pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const _randInt = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+const _uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)});
+
+function _genRealisticValue(k, v, i) {
+  if(v.enum) return v.enum[Math.floor(Math.random()*v.enum.length)];
+  if(v.format==='date-time') return new Date(Date.now()-Math.random()*86400000*90).toISOString();
+  if(v.format==='date') { const d=new Date(Date.now()-Math.random()*86400000*90); return d.toISOString().split('T')[0]; }
+  if(v.format==='uuid') return _uuid();
+  if(v.format==='ipv4') return _pick(_ips);
+  if(v.format==='email') return _pick(_emails);
+  if(v.type==='integer') return _randInt(v.minimum||0, v.maximum||1000);
+  if(v.type==='number') return +(Math.random()*(v.maximum||100)-(v.minimum||0)+(v.minimum||0)).toFixed(2);
+  if(v.type==='boolean') return Math.random()>0.3;
+  if(v.type==='object') return {};
+  // Context-aware string generation based on field name
+  const kl = k.toLowerCase();
+  if(kl==='number' && v.pattern) { const prefix=v.pattern.replace(/\[.*$/,''); return prefix+String(_randInt(1000000,9999999)); }
+  if(kl.includes('description')||kl==='short_description') return _pick(_descs);
+  if(kl.includes('name')&&!kl.includes('metric')&&!kl.includes('app')&&!kl.includes('host')&&!kl.includes('stream')&&!kl.includes('table')&&!kl.includes('user_name')) return _pick(_domains);
+  if(kl==='username'||kl==='user_name') return _pick(_emails).split('@')[0];
+  if(kl==='full_name'||kl==='assigned_to'||kl==='caller_id') return _pick(_names);
+  if(kl==='email') return _pick(_emails);
+  if(kl.includes('message')) return _pick(_msgs);
+  if(kl.includes('host')||kl==='hostname') return _pick(_domains);
+  if(kl==='page_url') return _pick(_urls);
+  if(kl==='referrer') return 'https://'+_pick(['google.com/search','github.com','news.ycombinator.com','linkedin.com','twitter.com']);
+  if(kl==='user_agent') return _pick(_agents);
+  if(kl==='trace_id') return _uuid().replace(/-/g,'').slice(0,16);
+  if(kl==='span_id') return _uuid().replace(/-/g,'').slice(0,8);
+  if(kl==='session_id') return _uuid();
+  if(kl==='source_ip'||kl==='ip_address') return _pick(_ips);
+  if(kl==='instance') return _pick(_ips)+':9100';
+  if(kl==='cmdb_ci'||kl==='sys_id'||kl==='_id'||kl==='event_id'||kl==='user_id') return _uuid();
+  if(kl==='job') return _pick(['node-exporter','prometheus','api-server','kubelet']);
+  return _pick(_descs).slice(0,60);
+}
+
+function runPreview(){
+  const schemaId = $('#gen-schema')?.value;
+  if(!schemaId){ alert('Select a schema first'); return; }
+  const count = parseInt($('#gen-count')?.value||'50');
+  if(count >= 100){ alert('Preview is only available when record count is under 100.'); return; }
+  const s = state.schemas.find(x=>x.id===schemaId);
+  if(!s) return;
+  const records = [];
+  for(let i=0;i<5;i++){
+    const rec = {};
+    for(const[k,v] of Object.entries(s.schema.properties||{})){
+      rec[k] = _genRealisticValue(k, v, i);
+    }
+    records.push(rec);
+  }
+  const json = JSON.stringify(records,null,2);
+  $('#gen-output').innerHTML = `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="card-title">Preview — 5 records</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('preview-json').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+        <button class="btn btn-sm" onclick="_downloadJSON()">Download</button>
+      </div>
+    </div>
+    <div class="code-preview" id="preview-json">${json}</div>
+  </div>`;
+  state._lastPreview = records;
+}
+
+function _downloadJSON(){
+  const data = state._lastPreview || [];
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='genforge-preview.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function runGenerate(){
+  const schemaId = $('#gen-schema')?.value;
+  const connId = $('#gen-connection')?.value;
+  const count = parseInt($('#gen-count')?.value||'10');
+  if(!schemaId){ alert('Select a schema first'); return; }
+  const s = state.schemas.find(x=>x.id===schemaId);
+
+  const job = {
+    id:'j'+Date.now().toString(36), schema_id:schemaId, connection_id:connId||null,
+    status:connId?'completed':'completed', count, records_sent:count, records_failed:0,
+    progress_pct:100, errors:[], started_at:new Date().toISOString(),
+    completed_at:new Date().toISOString(), duration_seconds:+(count*0.001).toFixed(3)
+  };
+  state.jobs.unshift(job);
+  $('#gen-output').innerHTML = `
+  <div class="card">
+    <div class="card-title" style="margin-bottom:8px">Job ${job.id}</div>
+    <div class="progress-bar" style="margin-bottom:12px"><div class="progress-fill" style="width:100%;background:var(--green)"></div></div>
+    <div style="font-size:13px;color:var(--tx-1)">
+      <span class="tag tag-green">completed</span>
+      ${count.toLocaleString()} records generated${connId?' and pushed':''} in ${job.duration_seconds}s
+    </div>
+  </div>`;
+}
+
+async function runPush(){
+  const schemaId = $('#gen-schema')?.value;
+  const connId = $('#gen-connection')?.value;
+  const count = parseInt($('#gen-count')?.value||'50');
+  const table = $('#gen-push-table')?.value?.trim();
+  if(!schemaId){ alert('Select a schema first'); return; }
+  if(!connId){ alert('Select a target connection first'); return; }
+  if(!table){ alert('Select a table / target from the dropdown'); return; }
+  const s = state.schemas.find(x=>x.id===schemaId);
+  const c = state.connections.find(x=>x.id===connId);
+  if(!s || !c) return;
+
+  const targets = _connectorTargets[c.connector_type] || [];
+  const targetDef = targets.find(t => t.table === table);
+  const targetLabel = targetDef ? targetDef.label : table;
+
+  const jobId = 'j'+Date.now().toString(36);
+  const statusEl = $('#gen-push-status');
+  const outputEl = $('#gen-output');
+  const startTime = Date.now();
+
+  // Show progress UI
+  if(statusEl) statusEl.innerHTML = `<div style="font-size:13px;color:var(--tx-2)">Pushing ${count} records to <strong>${c.name}</strong> → ${targetLabel}...</div>`;
+  if(outputEl) outputEl.innerHTML = `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">Push Job ${jobId}</div>
+      <div class="progress-bar" style="margin-bottom:12px"><div class="progress-fill" id="push-progress" style="width:15%;background:var(--accent);transition:width 0.3s"></div></div>
+      <div id="push-status-text" style="font-size:14px;color:var(--tx-1)"><span class="tag tag-amber">pushing</span> Sending ${count} records via backend API...</div>
+      <div id="push-log" class="code-preview" style="margin-top:12px;max-height:200px;font-size:13px"></div>
+    </div>`;
+  const logEl = document.getElementById('push-log');
+
+  try {
+    // Step 1: Register connection on the backend API (server-side, avoids CORS)
+    if(logEl) logEl.textContent += `[1/4] Registering connection "${c.name}" on backend...\n`;
+    const connResp = await fetch(`${API}/connections`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:c.name, connector_type:c.connector_type,
+        host:c.host, port:c.port||null,
+        auth_method:c.auth_method,
+        credentials:c.credentials||{username:'',password:''},
+        options:{table:table, api_mode:'table', batch_size:Math.min(count,50)},
+        environment:c.environment||'production'
+      })
+    });
+    if(!connResp.ok) throw new Error(`Connection registration failed: ${connResp.status} ${await connResp.text()}`);
+    const connData = await connResp.json();
+    const backendConnId = connData.id;
+    if(logEl) logEl.textContent += `[1/4] ✓ Connection registered: ${backendConnId}\n`;
+    document.getElementById('push-progress').style.width = '30%';
+
+    // Step 2: Register schema on the backend API
+    if(logEl) logEl.textContent += `[2/4] Registering schema "${s.name}" on backend...\n`;
+    const schemaResp = await fetch(`${API}/schemas`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:s.name, description:s.description||'',
+        schema:s.schema, category:s.category,
+        tags:s.tags||[]
+      })
+    });
+    if(!schemaResp.ok) throw new Error(`Schema registration failed: ${schemaResp.status} ${await schemaResp.text()}`);
+    const schemaData = await schemaResp.json();
+    const backendSchemaId = schemaData.id;
+    if(logEl) logEl.textContent += `[2/4] ✓ Schema registered: ${backendSchemaId}\n`;
+    document.getElementById('push-progress').style.width = '45%';
+
+    // Step 3: Create a push job on the backend (server-side push via connector)
+    if(logEl) logEl.textContent += `[3/4] Creating push job: ${count} records → ${c.connector_type}/${table}...\n`;
+    if(logEl) logEl.textContent += `       POST ${c.host}/api/now/table/${table} (via backend)\n`;
+    const jobResp = await fetch(`${API}/jobs`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        schema_id:backendSchemaId,
+        connection_id:backendConnId,
+        count:count,
+        batch_size:Math.min(count,50),
+        options:{table:table, include_edge_cases:false}
+      })
+    });
+    document.getElementById('push-progress').style.width = '80%';
+
+    if(!jobResp.ok){
+      const errBody = await jobResp.text();
+      throw new Error(`Job creation failed: ${jobResp.status} ${errBody}`);
+    }
+    const jobData = await jobResp.json();
+    if(logEl) logEl.textContent += `[3/4] ✓ Job completed: ${jobData.records_sent||0} sent, ${jobData.records_failed||0} failed\n`;
+
+    // Step 4: Show results
+    const sent = jobData.records_sent||0;
+    const failed = jobData.records_failed||0;
+    const duration = jobData.duration_seconds || +((Date.now()-startTime)/1000).toFixed(2);
+    const jobErrors = jobData.errors||[];
+
+    if(jobErrors.length && logEl){
+      logEl.textContent += `[4/4] Errors:\n`;
+      jobErrors.forEach((e,i)=>{ logEl.textContent += `  ${i+1}. ${typeof e==='string'?e:JSON.stringify(e)}\n`; });
+    } else if(logEl){
+      logEl.textContent += `[4/4] ✓ All records pushed successfully\n`;
+    }
+
+    const job = {
+      id:jobId, schema_id:schemaId, connection_id:connId,
+      status:failed===0?'completed':'failed', count, records_sent:sent, records_failed:failed,
+      progress_pct:100, errors:jobErrors, started_at:new Date(startTime).toISOString(),
+      completed_at:new Date().toISOString(), duration_seconds:duration
+    };
+    state.jobs.unshift(job);
+
+    const statusTag = failed===0?'green':failed===count?'red':'amber';
+    const statusLabel = failed===0?'completed':failed===count?'failed':'partial';
+    document.getElementById('push-progress').style.width = '100%';
+    document.getElementById('push-progress').style.background = failed===0?'var(--green)':failed===count?'var(--red)':'var(--amber)';
+    document.getElementById('push-status-text').innerHTML = `<span class="tag tag-${statusTag}">${statusLabel}</span> ${sent} of ${count} records pushed to <strong>${c.name}</strong> → ${targetLabel} in ${duration}s${failed?` (${failed} failed)`:''}`;
+    if(statusEl) statusEl.innerHTML = `<div style="font-size:13px;color:var(--${statusTag}-tx)">${statusLabel}: ${sent} sent, ${failed} failed in ${duration}s</div>`;
+
+  } catch(err){
+    // Handle errors — show details in log
+    const duration = +((Date.now()-startTime)/1000).toFixed(2);
+    if(logEl) logEl.textContent += `\n✗ Error: ${err.message}\n`;
+    const progEl = document.getElementById('push-progress');
+    const statTextEl = document.getElementById('push-status-text');
+    if(progEl){ progEl.style.width='100%'; progEl.style.background='var(--red)'; }
+    if(statTextEl) statTextEl.innerHTML = `<span class="tag tag-red">failed</span> Push to <strong>${c.name}</strong> → ${targetLabel} failed in ${duration}s`;
+    if(statusEl) statusEl.innerHTML = `<div style="font-size:13px;color:var(--red-tx)">Failed: ${err.message}</div>`;
+
+    const job = {
+      id:jobId, schema_id:schemaId, connection_id:connId,
+      status:'failed', count, records_sent:0, records_failed:count,
+      progress_pct:100, errors:[err.message], started_at:new Date(startTime).toISOString(),
+      completed_at:new Date().toISOString(), duration_seconds:duration
+    };
+    state.jobs.unshift(job);
+  }
+}
+
+// =========================================================================
+// Theme toggle
+// =========================================================================
+function toggleTheme(){
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('genforge-theme', next);
+  updateThemeUI(next);
+}
+function updateThemeUI(theme){
+  const sunIcon = document.getElementById('theme-icon-sun');
+  const moonIcon = document.getElementById('theme-icon-moon');
+  const label = document.getElementById('theme-label');
+  if(theme === 'light'){
+    if(sunIcon) sunIcon.style.display = 'none';
+    if(moonIcon) moonIcon.style.display = 'inline';
+    if(label) label.textContent = 'Dark mode';
+  } else {
+    if(sunIcon) sunIcon.style.display = 'inline';
+    if(moonIcon) moonIcon.style.display = 'none';
+    if(label) label.textContent = 'Light mode';
+  }
+}
+// Restore saved theme
+(function(){
+  const saved = localStorage.getItem('genforge-theme');
+  if(saved){
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeUI(saved);
+  }
+})();
+
+// =========================================================================
+// Health polling
+// =========================================================================
+async function pollHealth(){
+  try {
+    const res = await fetch(API.replace('/api','/api/health'));
+    if(res.ok){
+      const h = await res.json();
+      state._apiUptime = h.uptime_seconds || 0;
+      const dot = document.getElementById('api-health-dot');
+      const label = document.getElementById('api-health-label');
+      if(dot){ dot.className='status-dot healthy'; }
+      const mins = Math.floor((h.uptime_seconds||0)/60);
+      if(label){ label.textContent=`API: healthy (${mins}m)`; }
+      // Re-render dashboard if on that page to update uptime
+      if(state.currentPage === 'dashboard') render();
+    } else { throw new Error(); }
+  } catch(e){
+    state._apiUptime = null;
+    const dot = document.getElementById('api-health-dot');
+    const label = document.getElementById('api-health-label');
+    if(dot){ dot.className='status-dot error'; }
+    if(label){ label.textContent='API: offline'; }
+  }
+}
+pollHealth();
+setInterval(pollHealth, 30000);
+
+// =========================================================================
+// Init
+// =========================================================================
+$$('.nav-item').forEach(n=>n.addEventListener('click',()=>navigate(n.dataset.page)));
+render();
+</script>
+</body>
+</html>

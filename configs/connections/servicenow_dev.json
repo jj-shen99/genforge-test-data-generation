@@ -1,0 +1,16 @@
+{
+  "name": "ServiceNow Dev Instance",
+  "connector_type": "servicenow",
+  "host": "dev12345.service-now.com",
+  "auth_method": "basic",
+  "credentials": {
+    "username": "admin",
+    "password": "YOUR_PASSWORD_HERE"
+  },
+  "options": {
+    "table": "incident",
+    "api_mode": "table",
+    "batch_size": 50
+  },
+  "environment": "development"
+}

@@ -1,0 +1,95 @@
+{
+  "title": "ServiceNow Incident",
+  "description": "Test data schema for ServiceNow incident records",
+  "x-datagen-category": "servicenow",
+  "x-datagen-tags": ["itsm", "incident", "servicenow"],
+  "type": "object",
+  "properties": {
+    "number": {
+      "type": "string",
+      "pattern": "INC[0-9]{7}",
+      "x-datagen-unique": true
+    },
+    "short_description": {
+      "type": "string",
+      "x-datagen-faker": "hacker.phrase"
+    },
+    "description": {
+      "type": "string",
+      "x-datagen-faker": "lorem.paragraph"
+    },
+    "priority": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4],
+      "x-datagen-weight": [5, 20, 50, 25]
+    },
+    "urgency": {
+      "type": "integer",
+      "enum": [1, 2, 3],
+      "x-datagen-weight": [15, 45, 40]
+    },
+    "impact": {
+      "type": "integer",
+      "enum": [1, 2, 3],
+      "x-datagen-weight": [10, 40, 50]
+    },
+    "state": {
+      "type": "integer",
+      "enum": [1, 2, 3, 6, 7],
+      "x-datagen-weight": [15, 25, 20, 30, 10],
+      "x-datagen-depends-on": {
+        "field": "priority",
+        "rules": {
+          "1": { "enum": [1, 2, 3], "x-datagen-weight": [50, 40, 10] },
+          "4": { "enum": [6, 7], "x-datagen-weight": [70, 30] }
+        }
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": ["Network", "Hardware", "Software", "Database", "Security", "Cloud Infrastructure"],
+      "x-datagen-weight": [20, 15, 25, 15, 10, 15]
+    },
+    "subcategory": {
+      "type": "string",
+      "enum": ["Connectivity", "Performance", "Availability", "Configuration", "Access", "Backup"],
+      "x-datagen-weight": [20, 25, 20, 15, 10, 10]
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "x-datagen-time-pattern": {
+        "base": "now-90d",
+        "end": "now"
+      }
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time",
+      "x-datagen-time-pattern": {
+        "base": "now-60d",
+        "end": "now"
+      },
+      "x-datagen-null-rate": 0.35
+    },
+    "caller_id": {
+      "type": "string",
+      "x-datagen-faker": "person.name"
+    },
+    "assigned_to": {
+      "type": "string",
+      "x-datagen-faker": "person.name"
+    },
+    "assignment_group": {
+      "type": "string",
+      "enum": ["Network Ops", "Server Team", "DBA Team", "Security Ops", "Cloud Ops", "Service Desk"],
+      "x-datagen-weight": [20, 20, 15, 10, 20, 15]
+    },
+    "contact_type": {
+      "type": "string",
+      "enum": ["Phone", "Email", "Self-service", "Chat", "Walk-in"],
+      "x-datagen-weight": [25, 30, 25, 15, 5]
+    }
+  },
+  "required": ["number", "short_description", "priority", "state", "category", "opened_at"]
+}

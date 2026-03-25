@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  # GenForge API server
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "3800:3800"
+    environment:
+      - GENFORGE_ENV=development
+      - DATABASE_URL=postgresql://genforge:genforge@postgres:5432/genforge
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ../configs:/app/configs
+    command: uvicorn datagen.api.server:app --host 0.0.0.0 --port 3800 --reload
+
+  # Dashboard (static files served by nginx)
+  dashboard:
+    image: nginx:alpine
+    ports:
+      - "3880:80"
+    volumes:
+      - ../dashboard:/usr/share/nginx/html:ro
+
+  # PostgreSQL for internal state
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: genforge
+      POSTGRES_PASSWORD: genforge
+      POSTGRES_DB: genforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Redis for job queue and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
