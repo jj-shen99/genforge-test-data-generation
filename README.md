@@ -4,7 +4,7 @@ A unified, self-service platform for generating realistic, schema-driven synthet
 and pushing it directly into external systems through authenticated connectors.
 All metadata (schemas, connections, jobs, users) is persisted in **PostgreSQL**.
 
-**54 built-in schema templates** across **13 categories** · **16 push connectors** · **User authentication** · **PostgreSQL persistence** · **Light / Dark theme** · **Real-time API health** · **Edge-case data generation**
+**60 built-in schema templates** across **14 categories** · **16 push connectors** · **Weighted enum randomization** · **User authentication** · **PostgreSQL persistence** · **Light / Dark theme** · **Real-time API health** · **Configurable preview** · **Edge-case data generation**
 
 ## Quick Start
 
@@ -134,7 +134,7 @@ test-data-generation-ai/
 | ITSM           | ServiceNow (Table API, Import Set, Events)              |
 | Observability  | Cribl Stream, Elasticsearch, Grafana Loki, Prometheus, VictoriaMetrics |
 
-## Schema Templates (54 templates, alphabetically sorted)
+## Schema Templates (60 templates, alphabetically sorted)
 
 | # | Schema Name | Category |
 |---|-------------|----------|
@@ -192,6 +192,12 @@ test-data-generation-ai/
 | 52 | Trino Query Log | bigdata |
 | 53 | VictoriaMetrics Time Series | observability |
 | 54 | VMware vSphere VM Event | infra |
+| 55 | PagerDuty Incident | devops |
+| 56 | Microsoft Teams Webhook Event | messaging |
+| 57 | GitLab CI Pipeline | cicd |
+| 58 | Vulnerability Scan Finding | security |
+| 59 | Load Balancer Access Log | networking |
+| 60 | ServiceNow CMDB Relationship | servicenow |
 
 ## User Authentication
 
@@ -235,14 +241,14 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 
 ## Dashboard Features
 
-- **54 built-in schema templates** across 13 categories, alphabetically sorted
+- **60 built-in schema templates** across 14 categories, alphabetically sorted with weighted randomization
 - **16 push connectors** — ServiceNow, Elasticsearch, Kafka, MongoDB, PostgreSQL, Prometheus, VictoriaMetrics, Cribl, Grafana Loki, ClickHouse, Redis, Trino, AWS DynamoDB, AWS S3, AWS SQS, AWS Kinesis
 - **User authentication** — login page, admin/user roles, session persistence, role-based UI
 - **User management** — admin panel for creating and deleting users
 - **PostgreSQL persistence** — schemas, connections, jobs, and users survive server restarts
 - **Light / Dark theme** — toggle in sidebar footer, persisted to localStorage
 - **Load schema from file** — import JSON Schema files (raw or wrapped format) via file picker
-- **Schema category filters** — filter by all 13 categories with color-coded tags
+- **Schema category filters** — filter by all 14 categories with color-coded tags
 - **Connection testing** — real backend API health check via connector `validate_connection()`
 - **Edge-case toggle** — inject boundary values (empty strings, minimums, nulls) for testing
 - **Copy & Download** — preview JSON with one-click copy or download

@@ -389,11 +389,11 @@ const DEMO_CONNECTORS = [
 
 const DEMO_SCHEMAS = [
   {id:'s1',name:'ServiceNow Incident',description:'ITSM incident records with priority, state, and assignment fields',category:'servicenow',tags:['itsm','incident'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-02-20T14:12:00Z',
-   schema:{type:'object',properties:{number:{type:'string',pattern:'INC[0-9]{7}'},short_description:{type:'string'},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},urgency:{type:'integer',enum:[1,2,3]},impact:{type:'integer',enum:[1,2,3]},state:{type:'integer',enum:[1,2,3,6,7],'x-datagen-weight':[15,25,20,30,10]},category:{type:'string',enum:['Network','Hardware','Software','Database','Security','Cloud']},assigned_to:{type:'string'},caller_id:{type:'string'},opened_at:{type:'string',format:'date-time'},cmdb_ci:{type:'string'},close_code:{type:'string',enum:['Solved (Work Around)','Solved (Permanently)','Solved Remotely (Work Around)','Solved Remotely (Permanently)','Not Solved (Not Reproducible)','Not Solved (Too Costly)','Closed/Resolved by Caller']},close_notes:{type:'string'}}}},
+   schema:{type:'object',properties:{number:{type:'string',pattern:'INC[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},urgency:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,40,50]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[1,2,3,6,7],'x-datagen-weight':[15,25,20,30,10]},category:{type:'string',enum:['Network','Hardware','Software','Database','Security','Cloud'],'x-datagen-weight':[20,15,30,15,10,10]},assigned_to:{type:'string','x-datagen-faker':'person.name'},caller_id:{type:'string','x-datagen-faker':'person.name'},opened_at:{type:'string',format:'date-time'},cmdb_ci:{type:'string',format:'uuid'},close_code:{type:'string',enum:['Solved (Work Around)','Solved (Permanently)','Solved Remotely (Work Around)','Solved Remotely (Permanently)','Not Solved (Not Reproducible)','Not Solved (Too Costly)','Closed/Resolved by Caller'],'x-datagen-weight':[20,30,10,15,10,5,10]},close_notes:{type:'string','x-datagen-faker':'sentence'}}}},
   {id:'s2',name:'ServiceNow Change Request',description:'Change management records for ITSM workflows',category:'servicenow',tags:['itsm','change'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-01-10T09:45:00Z',
-   schema:{type:'object',properties:{number:{type:'string',pattern:'CHG[0-9]{7}'},short_description:{type:'string'},type:{type:'string',enum:['Normal','Standard','Emergency'],'x-datagen-weight':[50,35,15]},risk:{type:'string',enum:['High','Moderate','Low']},state:{type:'integer',enum:[-5]},start_date:{type:'string',format:'date-time'},assigned_to:{type:'string'},cmdb_ci:{type:'string'}}}},
+   schema:{type:'object',properties:{number:{type:'string',pattern:'CHG[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},type:{type:'string',enum:['Normal','Standard','Emergency'],'x-datagen-weight':[50,35,15]},risk:{type:'string',enum:['High','Moderate','Low'],'x-datagen-weight':[15,50,35]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[-5,-4,-3,-2,-1,0,3],'x-datagen-weight':[15,10,20,10,15,20,10]},start_date:{type:'string',format:'date-time'},end_date:{type:'string',format:'date-time'},assigned_to:{type:'string','x-datagen-faker':'person.name'},cmdb_ci:{type:'string',format:'uuid'}}}},
   {id:'s3',name:'ServiceNow CMDB CI',description:'Configuration items for CMDB population',category:'servicenow',tags:['cmdb','ci'],created_at:'2025-12-01T10:00:00Z',updated_at:'2026-03-01T16:20:00Z',
-   schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},name:{type:'string'},sys_class_name:{type:'string',enum:['cmdb_ci_server','cmdb_ci_vm','cmdb_ci_app_server','cmdb_ci_database','cmdb_ci_netgear','cmdb_ci_service']},operational_status:{type:'integer',enum:[1,2,5,6]},ip_address:{type:'string',format:'ipv4'},os:{type:'string',enum:['Linux','Windows Server 2022','RHEL 9','Ubuntu 22.04','VMware ESXi']},environment:{type:'string',enum:['Production','Staging','Development','DR']}}}},
+   schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},name:{type:'string','x-datagen-faker':'domainName'},sys_class_name:{type:'string',enum:['cmdb_ci_server','cmdb_ci_vm','cmdb_ci_app_server','cmdb_ci_database','cmdb_ci_netgear','cmdb_ci_service'],'x-datagen-weight':[25,30,15,15,5,10]},operational_status:{type:'integer',enum:[1,2,5,6],'x-datagen-weight':[60,20,10,10]},ip_address:{type:'string',format:'ipv4'},os:{type:'string',enum:['Linux','Windows Server 2022','RHEL 9','Ubuntu 22.04','VMware ESXi'],'x-datagen-weight':[30,20,20,20,10]},environment:{type:'string',enum:['Production','Staging','Development','DR'],'x-datagen-weight':[40,25,25,10]},manufacturer:{type:'string',enum:['Dell','HP','Lenovo','Cisco','VMware','AWS'],'x-datagen-weight':[25,25,15,15,10,10]},asset_tag:{type:'string',pattern:'ASSET[0-9]{6}'}}}}},
   {id:'s4',name:'VictoriaMetrics Time Series',description:'Time-series metric samples for VictoriaMetrics import',category:'observability',tags:['victoriametrics','metrics'],created_at:'2025-12-10T11:00:00Z',updated_at:'2026-02-28T13:30:00Z',
    schema:{type:'object',properties:{metric:{type:'string',enum:['node_cpu_seconds_total','node_memory_MemAvailable_bytes','node_disk_io_time_seconds_total','http_requests_total','process_cpu_seconds_total']},value:{type:'number',minimum:0,maximum:100},timestamp:{type:'string',format:'date-time'},instance:{type:'string'},job:{type:'string',enum:['node-exporter','prometheus','api-server','kubelet']}}}},
   {id:'s5',name:'Kafka User Activity Events',description:'User activity event stream for Kafka ingestion',category:'bigdata',tags:['kafka','events','streaming'],created_at:'2026-01-05T09:00:00Z',updated_at:'2026-03-10T11:15:00Z',
@@ -430,9 +430,9 @@ const DEMO_SCHEMAS = [
    schema:{type:'object',properties:{alert_name:{type:'string',enum:['HighCPUUsage','HighMemoryUsage','DiskSpaceLow','PodCrashLooping','HighErrorRate','SlowResponseTime','CertificateExpiring','NodeNotReady','HighNetworkLatency','DatabaseConnectionPoolExhausted']},severity:{type:'string',enum:['critical','warning','info'],'x-datagen-weight':[15,45,40]},state:{type:'string',enum:['firing','resolved','pending'],'x-datagen-weight':[30,50,20]},namespace:{type:'string',enum:['production','staging','monitoring','kube-system']},instance:{type:'string'},value:{type:'number',minimum:0,maximum:100},threshold:{type:'number'},starts_at:{type:'string',format:'date-time'},ends_at:{type:'string',format:'date-time'},labels:{type:'object'}}}},
   // — Additional ServiceNow schemas —
   {id:'s21',name:'ServiceNow Problem',description:'Problem management records for root cause analysis',category:'servicenow',tags:['itsm','problem'],created_at:'2026-03-01T08:00:00Z',updated_at:'2026-03-24T10:00:00Z',
-   schema:{type:'object',properties:{number:{type:'string',pattern:'PRB[0-9]{7}'},short_description:{type:'string'},priority:{type:'integer',enum:[1,2,3,4]},state:{type:'integer',enum:[1,2,4,5,6]},category:{type:'string',enum:['Software','Hardware','Network','Database','Security']},first_reported:{type:'string',format:'date-time'},root_cause:{type:'string'},workaround:{type:'string'},assigned_to:{type:'string'},related_incidents:{type:'integer',minimum:1,maximum:50}}}},
+   schema:{type:'object',properties:{number:{type:'string',pattern:'PRB[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},state:{type:'integer',enum:[1,2,4,5,6],'x-datagen-weight':[20,25,20,15,20]},category:{type:'string',enum:['Software','Hardware','Network','Database','Security'],'x-datagen-weight':[30,20,20,15,15]},first_reported:{type:'string',format:'date-time'},root_cause:{type:'string','x-datagen-faker':'sentence'},workaround:{type:'string','x-datagen-faker':'sentence'},assigned_to:{type:'string','x-datagen-faker':'person.name'},related_incidents:{type:'integer',minimum:1,maximum:50}}}},
   {id:'s22',name:'ServiceNow Service Request',description:'Service catalog request items for fulfillment workflows',category:'servicenow',tags:['itsm','request'],created_at:'2026-03-02T09:00:00Z',updated_at:'2026-03-24T11:00:00Z',
-   schema:{type:'object',properties:{number:{type:'string',pattern:'REQ[0-9]{7}'},short_description:{type:'string'},request_state:{type:'string',enum:['approved','requested','in_process','closed_complete','closed_incomplete']},priority:{type:'integer',enum:[1,2,3,4]},requested_for:{type:'string'},opened_at:{type:'string',format:'date-time'},delivery_plan:{type:'string'},price:{type:'number',minimum:0,maximum:10000}}}},
+   schema:{type:'object',properties:{number:{type:'string',pattern:'REQ[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},request_state:{type:'string',enum:['approved','requested','in_process','closed_complete','closed_incomplete'],'x-datagen-weight':[20,15,25,30,10]},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},requested_for:{type:'string','x-datagen-faker':'person.name'},opened_at:{type:'string',format:'date-time'},delivery_plan:{type:'string',enum:['Standard','Express','Scheduled','Emergency'],'x-datagen-weight':[50,25,15,10]},price:{type:'number',minimum:0,maximum:10000}}}},
   // — Additional observability schemas —
   {id:'s23',name:'Grafana Loki Log Stream',description:'Structured log entries for Grafana Loki push API',category:'observability',tags:['loki','logs','grafana'],created_at:'2026-03-03T10:00:00Z',updated_at:'2026-03-24T12:00:00Z',
    schema:{type:'object',properties:{timestamp:{type:'string',format:'date-time'},stream:{type:'string',enum:['stdout','stderr','syslog','application']},level:{type:'string',enum:['debug','info','warn','error','fatal'],'x-datagen-weight':[5,55,20,15,5]},message:{type:'string'},container:{type:'string',enum:['api-gateway','auth-svc','worker','scheduler','web-ui']},namespace:{type:'string',enum:['production','staging','dev']},pod_name:{type:'string'},node:{type:'string'}}}},
@@ -515,6 +515,19 @@ const DEMO_SCHEMAS = [
   // — Additional Analytics —
   {id:'s54',name:'Data Pipeline Run',description:'ETL/ELT data pipeline execution records for data engineering',category:'analytics',tags:['pipeline','etl','data-engineering'],created_at:'2026-03-22T14:00:00Z',updated_at:'2026-03-25T22:00:00Z',
    schema:{type:'object',properties:{run_id:{type:'string',format:'uuid'},pipeline_name:{type:'string',enum:['user_events_daily','revenue_aggregation','product_catalog_sync','clickstream_enrichment','ml_feature_store','data_quality_check','customer_360']},orchestrator:{type:'string',enum:['Airflow','dbt','Dagster','Prefect','Step Functions']},status:{type:'string',enum:['success','failed','running','skipped','upstream_failed'],'x-datagen-weight':[65,12,10,8,5]},rows_processed:{type:'integer',minimum:0,maximum:50000000},duration_s:{type:'integer',minimum:5,maximum:7200},source:{type:'string',enum:['postgres','s3','kafka','api','bigquery']},destination:{type:'string',enum:['snowflake','bigquery','redshift','s3','postgres']},data_freshness_min:{type:'integer',minimum:0,maximum:1440},started_at:{type:'string',format:'date-time'}}}},
+  // — Additional templates (s55–s60) —
+  {id:'s55',name:'PagerDuty Incident',description:'PagerDuty on-call incident notifications and escalation records',category:'devops',tags:['pagerduty','oncall','incident','escalation'],created_at:'2026-03-23T08:00:00Z',updated_at:'2026-03-25T23:00:00Z',
+   schema:{type:'object',properties:{incident_id:{type:'string',format:'uuid'},title:{type:'string','x-datagen-faker':'sentence'},urgency:{type:'string',enum:['high','low'],'x-datagen-weight':[35,65]},status:{type:'string',enum:['triggered','acknowledged','resolved'],'x-datagen-weight':[20,25,55]},service:{type:'string',enum:['api-gateway','payment-service','database-primary','cdn-origin','auth-service','search-cluster']},escalation_policy:{type:'string',enum:['P1-Critical','P2-High','P3-Standard','P4-Low'],'x-datagen-weight':[10,25,45,20]},assigned_to:{type:'string','x-datagen-faker':'person.name'},num_escalations:{type:'integer',minimum:0,maximum:5},triggered_at:{type:'string',format:'date-time'},resolved_at:{type:'string',format:'date-time'},ttd_seconds:{type:'integer',minimum:30,maximum:3600},ttr_seconds:{type:'integer',minimum:60,maximum:14400}}}},
+  {id:'s56',name:'Microsoft Teams Webhook Event',description:'Microsoft Teams channel webhook and activity events',category:'messaging',tags:['teams','webhook','collaboration'],created_at:'2026-03-23T09:00:00Z',updated_at:'2026-03-25T23:30:00Z',
+   schema:{type:'object',properties:{event_id:{type:'string',format:'uuid'},event_type:{type:'string',enum:['message_posted','file_shared','meeting_started','meeting_ended','channel_created','member_added','reaction_added','tab_added'],'x-datagen-weight':[35,15,12,12,5,8,10,3]},actor:{type:'string','x-datagen-faker':'person.name'},actor_email:{type:'string',format:'email'},team:{type:'string',enum:['Engineering','DevOps','Security','Product','Support','Leadership']},channel:{type:'string',enum:['general','incidents','deployments','pull-requests','alerts','standup','random']},tenant_id:{type:'string',format:'uuid'},ip_address:{type:'string',format:'ipv4'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s57',name:'GitLab CI Pipeline',description:'GitLab CI/CD pipeline execution and job records',category:'cicd',tags:['gitlab','ci','pipeline','jobs'],created_at:'2026-03-23T10:00:00Z',updated_at:'2026-03-25T23:45:00Z',
+   schema:{type:'object',properties:{pipeline_id:{type:'integer',minimum:10000,maximum:999999},project:{type:'string',enum:['backend-api','frontend-app','data-service','infra-terraform','mobile-ios','mobile-android','shared-libs']},ref:{type:'string',enum:['main','develop','feature/auth','feature/api-v3','hotfix/memory-leak','release/2.0']},status:{type:'string',enum:['success','failed','canceled','running','pending','manual'],'x-datagen-weight':[60,15,5,10,5,5]},source:{type:'string',enum:['push','merge_request_event','schedule','trigger','web','api'],'x-datagen-weight':[40,30,10,8,7,5]},stage:{type:'string',enum:['build','test','security_scan','staging','production','cleanup']},duration_s:{type:'integer',minimum:15,maximum:5400},queued_duration_s:{type:'integer',minimum:0,maximum:300},coverage_pct:{type:'number',minimum:40,maximum:100},user:{type:'string','x-datagen-faker':'person.name'},created_at:{type:'string',format:'date-time'}}}},
+  {id:'s58',name:'Vulnerability Scan Finding',description:'Application and infrastructure vulnerability scan results',category:'security',tags:['vulnerability','scan','cve','compliance'],created_at:'2026-03-23T11:00:00Z',updated_at:'2026-03-25T23:50:00Z',
+   schema:{type:'object',properties:{finding_id:{type:'string',format:'uuid'},scanner:{type:'string',enum:['Trivy','Snyk','SonarQube','Nessus','Qualys','Grype']},severity:{type:'string',enum:['critical','high','medium','low','info'],'x-datagen-weight':[3,10,30,35,22]},cve_id:{type:'string',pattern:'CVE-202[4-6]-[0-9]{5}'},title:{type:'string','x-datagen-faker':'sentence'},package_name:{type:'string',enum:['openssl','log4j-core','lodash','jackson-databind','golang.org/x/net','requests','spring-core','express']},installed_version:{type:'string'},fixed_version:{type:'string'},resource_type:{type:'string',enum:['container_image','source_code','host','cloud_resource','library'],'x-datagen-weight':[30,25,15,15,15]},status:{type:'string',enum:['open','in_progress','fixed','accepted','false_positive'],'x-datagen-weight':[35,15,25,15,10]},first_seen:{type:'string',format:'date-time'},last_seen:{type:'string',format:'date-time'}}}},
+  {id:'s59',name:'Load Balancer Access Log',description:'Layer 7 load balancer request and response logs',category:'networking',tags:['loadbalancer','access','http','traffic'],created_at:'2026-03-23T12:00:00Z',updated_at:'2026-03-25T23:55:00Z',
+   schema:{type:'object',properties:{request_id:{type:'string',format:'uuid'},method:{type:'string',enum:['GET','POST','PUT','DELETE','PATCH','HEAD','OPTIONS'],'x-datagen-weight':[55,20,8,5,5,4,3]},path:{type:'string',enum:['/api/v2/users','/api/v2/orders','/api/v1/health','/api/v2/products','/api/v2/search','/api/v2/auth/token','/static/bundle.js','/']},status_code:{type:'integer',enum:[200,201,204,301,304,400,401,403,404,429,500,502,503],'x-datagen-weight':[50,8,5,2,3,5,4,2,8,3,4,3,3]},response_time_ms:{type:'integer',minimum:1,maximum:30000},backend_server:{type:'string',enum:['web-01','web-02','web-03','web-04','api-01','api-02']},client_ip:{type:'string',format:'ipv4'},bytes_sent:{type:'integer',minimum:100,maximum:5242880},bytes_received:{type:'integer',minimum:50,maximum:1048576},ssl_protocol:{type:'string',enum:['TLSv1.2','TLSv1.3'],'x-datagen-weight':[30,70]},user_agent:{type:'string'},timestamp:{type:'string',format:'date-time'}}}},
+  {id:'s60',name:'ServiceNow CMDB Relationship',description:'CMDB CI relationship records for dependency mapping',category:'servicenow',tags:['cmdb','relationship','dependency'],created_at:'2026-03-23T13:00:00Z',updated_at:'2026-03-25T23:59:00Z',
+   schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},parent:{type:'string',format:'uuid'},child:{type:'string',format:'uuid'},type:{type:'string',enum:['Depends on::Used by','Runs on::Runs','Hosted on::Hosts','Members of::Member of','Sends data to::Receives data from','Connects to::Connected by'],'x-datagen-weight':[25,20,20,10,15,10]},connection_strength:{type:'string',enum:['Always','Often','Sometimes','Rarely'],'x-datagen-weight':[45,30,15,10]},port:{type:'integer',enum:[22,80,443,3306,5432,6379,8080,9200,27017]},percent_outage:{type:'number',minimum:0,maximum:100},operational_status:{type:'integer',enum:[1,2,5,6],'x-datagen-weight':[60,20,10,10]},discovery_source:{type:'string',enum:['ServiceWatch','Manual','Import','Agent','Cloud Discovery'],'x-datagen-weight':[30,15,10,30,15]},sys_created_on:{type:'string',format:'date-time'}}}},
 ];
 
 DEMO_SCHEMAS.sort((a,b) => a.name.localeCompare(b.name));
@@ -697,10 +710,8 @@ function _genSetCatFilter(cat){
 
 function _updatePreviewBtn(){
   const btn = document.getElementById('gen-preview-btn');
-  const count = parseInt(document.getElementById('gen-count')?.value || '0');
   if(btn){
-    btn.disabled = count >= 100 || !_genSelectedSchema;
-    btn.title = count >= 100 ? 'Preview is only available when record count is under 100' : '';
+    btn.disabled = !_genSelectedSchema;
   }
 }
 
@@ -868,7 +879,11 @@ function renderGenerate(){
 
       <div style="display:flex;gap:8px">
         <button class="gen-btn-generate" onclick="runGenerate()" ${sel?'':'disabled'}>Generate Data</button>
-        <button class="btn" style="padding:14px 20px;font-size:15px" id="gen-preview-btn" onclick="runPreview()" ${sel?'':'disabled'} title="Preview is available when record count is under 100">Preview</button>
+        <button class="gen-btn-generate" style="background:var(--accent);flex:0 0 auto;min-width:160px" id="gen-preview-btn" onclick="runPreview()" ${sel?'':'disabled'} title="Preview generated data">&#128065; Preview</button>
+        <div class="form-group" style="margin:0;width:80px">
+          <label style="font-size:11px">Preview #</label>
+          <input type="number" id="gen-preview-count" value="5" min="1" max="50" style="text-align:center;padding:14px 8px">
+        </div>
       </div>
     </div>
   </div>
@@ -1274,8 +1289,15 @@ const _pick = arr => arr[Math.floor(Math.random()*arr.length)];
 const _randInt = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
 const _uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)});
 
+function _weightedPick(values, weights) {
+  if(!weights || weights.length !== values.length) return values[Math.floor(Math.random()*values.length)];
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total, cum = 0;
+  for(let i=0;i<values.length;i++){ cum+=weights[i]; if(r<=cum) return values[i]; }
+  return values[values.length-1];
+}
 function _genRealisticValue(k, v, i) {
-  if(v.enum) return v.enum[Math.floor(Math.random()*v.enum.length)];
+  if(v.enum) return _weightedPick(v.enum, v['x-datagen-weight']);
   if(v.format==='date-time') return new Date(Date.now()-Math.random()*86400000*90).toISOString();
   if(v.format==='date') { const d=new Date(Date.now()-Math.random()*86400000*90); return d.toISOString().split('T')[0]; }
   if(v.format==='uuid') return _uuid();
@@ -1285,13 +1307,24 @@ function _genRealisticValue(k, v, i) {
   if(v.type==='number') return +(Math.random()*(v.maximum||100)-(v.minimum||0)+(v.minimum||0)).toFixed(2);
   if(v.type==='boolean') return Math.random()>0.3;
   if(v.type==='object') return {};
+  // x-datagen-faker support in preview
+  const faker = v['x-datagen-faker'];
+  if(faker) {
+    if(faker==='person.name'||faker==='name') return _pick(_names);
+    if(faker==='sentence'||faker==='text') return _pick(_descs);
+    if(faker==='userName') return _pick(_emails).split('@')[0];
+    if(faker==='email') return _pick(_emails);
+    if(faker==='domainName') return _pick(_domains).split('.').slice(0,2).join('.');
+    if(faker==='company'||faker==='companyName') return _pick(['Acme Corp','Globex Inc','Initech','Umbrella Co','WayneTech']);
+    if(faker==='countryCode') return _pick(['US','GB','DE','FR','JP','IN','BR','CA','AU']);
+  }
   // Context-aware string generation based on field name
   const kl = k.toLowerCase();
   if(kl==='number' && v.pattern) { const prefix=v.pattern.replace(/\[.*$/,''); return prefix+String(_randInt(1000000,9999999)); }
   if(kl.includes('description')||kl==='short_description') return _pick(_descs);
   if(kl.includes('name')&&!kl.includes('metric')&&!kl.includes('app')&&!kl.includes('host')&&!kl.includes('stream')&&!kl.includes('table')&&!kl.includes('user_name')) return _pick(_domains);
   if(kl==='username'||kl==='user_name') return _pick(_emails).split('@')[0];
-  if(kl==='full_name'||kl==='assigned_to'||kl==='caller_id') return _pick(_names);
+  if(kl==='full_name'||kl==='assigned_to'||kl==='caller_id'||kl==='requested_for'||kl==='commander'||kl==='actor'||kl==='analyst'||kl==='author'||kl==='triggered_by') return _pick(_names);
   if(kl==='email') return _pick(_emails);
   if(kl.includes('message')) return _pick(_msgs);
   if(kl.includes('host')||kl==='hostname') return _pick(_domains);
@@ -1303,7 +1336,7 @@ function _genRealisticValue(k, v, i) {
   if(kl==='session_id') return _uuid();
   if(kl==='source_ip'||kl==='ip_address') return _pick(_ips);
   if(kl==='instance') return _pick(_ips)+':9100';
-  if(kl==='cmdb_ci'||kl==='sys_id'||kl==='_id'||kl==='event_id'||kl==='user_id') return _uuid();
+  if(kl==='cmdb_ci'||kl==='sys_id'||kl==='_id'||kl==='event_id'||kl==='user_id'||kl==='request_id'||kl==='container_id'||kl==='task_arn'||kl==='subscription_id') return _uuid();
   if(kl==='job') return _pick(['node-exporter','prometheus','api-server','kubelet']);
   return _pick(_descs).slice(0,60);
 }
@@ -1311,12 +1344,11 @@ function _genRealisticValue(k, v, i) {
 function runPreview(){
   const schemaId = $('#gen-schema')?.value;
   if(!schemaId){ alert('Select a schema first'); return; }
-  const count = parseInt($('#gen-count')?.value||'50');
-  if(count >= 100){ alert('Preview is only available when record count is under 100.'); return; }
+  const previewCount = Math.min(Math.max(parseInt($('#gen-preview-count')?.value||'5'),1),50);
   const s = state.schemas.find(x=>x.id===schemaId);
   if(!s) return;
   const records = [];
-  for(let i=0;i<5;i++){
+  for(let i=0;i<previewCount;i++){
     const rec = {};
     for(const[k,v] of Object.entries(s.schema.properties||{})){
       rec[k] = _genRealisticValue(k, v, i);
@@ -1326,7 +1358,7 @@ function runPreview(){
   const json = JSON.stringify(records,null,2);
   $('#gen-output').innerHTML = `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="card-title">Preview — 5 records</div>
+      <div class="card-title">Preview — ${records.length} record${records.length===1?'':'s'}</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('preview-json').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
         <button class="btn btn-sm" onclick="_downloadJSON()">Download</button>

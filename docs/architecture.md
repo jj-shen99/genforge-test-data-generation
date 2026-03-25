@@ -9,7 +9,7 @@ User authentication with role-based access control protects admin operations.
 ### Core Capabilities
 
 - **Schema-driven generation** — JSON Schema dialect with `x-datagen-*` extensions for weighted enums, Faker providers, distributions, null rates, uniqueness, and foreign key references
-- **54 built-in templates** — pre-configured schemas across 13 categories (datacenter, cloud, ITSM, observability, databases, CI/CD, security, networking, messaging, analytics, devops)
+- **60 built-in templates** — pre-configured schemas across 14 categories (datacenter, cloud, ITSM, observability, databases, CI/CD, security, networking, messaging, analytics, devops)
 - **Push to 16 external systems** — authenticated connectors routed through the backend API (no CORS issues)
 - **Edge-case injection** — toggle to generate boundary values, empty strings, and extreme numbers
 - **Configurable volume** — 1 to 10,000 records per batch
@@ -30,7 +30,7 @@ User authentication with role-based access control protects admin operations.
 │                                                                  │
 │  ┌────────────────┐  ┌───────────────┐  ┌─────────────────────┐ │
 │  │ Schema Studio   │  │ Connections   │  │ Generate & Push     │ │
-│  │ (54 templates,  │  │ (16 targets,  │  │ (preview, batch,    │ │
+│  │ (60 templates,  │  │ (16 targets,  │  │ (preview, batch,    │ │
 │  │  load from file)│  │  auth config) │  │  edge-case toggle)  │ │
 │  └───────┬────────┘  └──────┬────────┘  └──────────┬──────────┘ │
 │  ┌───────┴────────┐         │                       │            │
@@ -102,7 +102,7 @@ User authentication with role-based access control protects admin operations.
 **Pages:**
 
 - **Dashboard** — 8 metrics (schemas, connections, active connections, jobs, records, success rate, failed, API uptime), schema category breakdown, connections panel, connector grid, recent schemas, recent activity feed
-- **Schema Studio** — browse, create, load from file, and inspect 54 built-in JSON schemas (alphabetically sorted) across 13 categories with field-level detail and category filter tabs
+- **Schema Studio** — browse, create, load from file, and inspect 60 built-in JSON schemas (alphabetically sorted) across 14 categories with field-level detail and category filter tabs
 - **Connections** — configure and test target connections with auth credentials, status indicator; persisted in PostgreSQL
 - **Generate & Push** — select schema + connection, set record count, edge-case toggle, preview with copy/download, or run a job
 - **Job Monitor** — real-time job table with status, progress, and duration; job history persisted in PostgreSQL
@@ -324,6 +324,6 @@ User → Dashboard → POST /api/jobs {schema_id, connection_id, count}
 | `datagen/connectors/registry.py` | Plugin discovery & registration (16 connectors) |
 | `datagen/connectors/auth.py` | Auth provider (session creation for connectors) |
 | `datagen/cli.py` | CLI entry point (`genforge` command) |
-| `dashboard/index.html` | Web dashboard SPA (54 templates, light/dark theme) |
+| `dashboard/index.html` | Web dashboard SPA (60 templates, light/dark theme) |
 | `setup.py` | Package definition, extras, entry points |
 | `.env.example` | Database connection string configuration |

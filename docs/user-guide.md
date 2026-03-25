@@ -84,7 +84,7 @@ docker-compose up -d
 
 The landing page shows a comprehensive summary of your workspace:
 
-- **Schemas** — number of loaded/created schemas (54 built-in templates)
+- **Schemas** — number of loaded/created schemas (60 built-in templates)
 - **Connections** — number of configured target connections (persisted in PostgreSQL)
 - **Active connections** — connections with healthy status
 - **Jobs run** — total generation jobs executed (persisted in PostgreSQL)
@@ -92,7 +92,7 @@ The landing page shows a comprehensive summary of your workspace:
 - **Success rate** — percentage of completed jobs
 - **Failed jobs** — count of failed generation jobs
 - **API uptime** — live uptime from the `/api/health` endpoint
-- **Schema categories** — visual breakdown by 13 categories (servicenow, observability, database, cloud, bigdata, cicd, infra, security, datacenter, networking, messaging, analytics, devops)
+- **Schema categories** — visual breakdown by 14 categories (servicenow, observability, database, cloud, bigdata, cicd, infra, security, datacenter, networking, messaging, analytics, devops, generic)
 - **Connections panel** — quick-view of recent connections with status
 - **Available connectors** — grid of all 16 supported push targets
 - **Recent schemas** — table listing schemas alphabetically with category and field count
