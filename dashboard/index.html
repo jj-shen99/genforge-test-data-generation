@@ -1566,48 +1566,26 @@ const _AUTH_FIELDS = {
 };
 
 const _CONNECTOR_OPTIONS = {
-  servicenow: [
-    {key:'table', label:'Table name', placeholder:'incident', dflt:'incident'},
-    {key:'api_mode', label:'API mode', type:'select', options:['table','import_set','event'], dflt:'table'},
-    {key:'batch_size', label:'Batch size', type:'number', placeholder:'50', dflt:'50'},
-  ],
+  servicenow: [],
   elasticsearch: [
-    {key:'index', label:'Index name', placeholder:'test-data', dflt:'test-data'},
-    {key:'pipeline', label:'Ingest pipeline (optional)', placeholder:'my-pipeline', dflt:''},
     {key:'ssl', label:'Use SSL', type:'checkbox', dflt:true},
     {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:true},
   ],
   mongodb: [
     {key:'database', label:'Database', placeholder:'test', dflt:'test'},
-    {key:'collection', label:'Collection', placeholder:'test_data', dflt:'test_data'},
     {key:'uri', label:'Connection URI (optional)', placeholder:'mongodb://localhost:27017', dflt:''},
     {key:'auth_source', label:'Auth source', placeholder:'admin', dflt:'admin'},
   ],
   postgres: [
     {key:'database', label:'Database', placeholder:'postgres', dflt:'postgres'},
-    {key:'schema', label:'Schema', placeholder:'public', dflt:'public'},
-    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
   ],
   kafka: [
-    {key:'topic', label:'Topic', placeholder:'test-data', dflt:'test-data'},
-    {key:'key_field', label:'Key field (optional)', placeholder:'id', dflt:''},
     {key:'compression', label:'Compression', type:'select', options:['snappy','gzip','lz4','none'], dflt:'snappy'},
   ],
-  aws_s3: [
-    {key:'bucket', label:'Bucket name', placeholder:'genforge-output', dflt:'genforge-output'},
-    {key:'prefix', label:'Key prefix', placeholder:'generated/', dflt:'generated/'},
-    {key:'format', label:'File format', type:'select', options:['jsonl','json','csv'], dflt:'jsonl'},
-  ],
-  aws_sqs: [
-    {key:'queue_url', label:'Queue URL', placeholder:'https://sqs.us-east-1.amazonaws.com/123456789/my-queue', dflt:''},
-  ],
-  aws_dynamodb: [
-    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
-  ],
-  aws_kinesis: [
-    {key:'stream_name', label:'Stream name', placeholder:'test-stream', dflt:'test-stream'},
-    {key:'partition_key', label:'Partition key field', placeholder:'id', dflt:'id'},
-  ],
+  aws_s3: [],
+  aws_sqs: [],
+  aws_dynamodb: [],
+  aws_kinesis: [],
   prometheus: [
     {key:'ssl', label:'Use SSL', type:'checkbox', dflt:true},
     {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:true},
@@ -1628,18 +1606,14 @@ const _CONNECTOR_OPTIONS = {
   ],
   clickhouse: [
     {key:'database', label:'Database', placeholder:'default', dflt:'default'},
-    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
     {key:'ssl', label:'Use SSL', type:'checkbox', dflt:false},
   ],
   redis: [
     {key:'db', label:'Database number', type:'number', placeholder:'0', dflt:'0'},
-    {key:'key_prefix', label:'Key prefix', placeholder:'genforge:', dflt:'genforge:'},
-    {key:'data_type', label:'Data type', type:'select', options:['hash','string','list'], dflt:'hash'},
   ],
   trino: [
     {key:'catalog', label:'Catalog', placeholder:'hive', dflt:'hive'},
     {key:'schema', label:'Schema', placeholder:'default', dflt:'default'},
-    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
   ],
 };
 

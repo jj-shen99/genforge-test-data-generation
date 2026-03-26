@@ -139,7 +139,7 @@ Configure connections to external push targets.
    - **OAuth 2.0** → Client ID + Client Secret + Token URL
    - **Bearer token** → Bearer Token
    - **AWS IAM** → Access Key ID + Secret Access Key + AWS Region
-5. Review the auto-populated **connector settings** (e.g., table name, index, topic, bucket, SSL toggles) and adjust as needed
+5. Review the **connector settings** if shown (e.g., SSL, database name, compression) — only settings that affect connectivity appear here; push targets like table, index, or topic are selected at push time
 6. Click **Create**
 
 **Testing a connection:**
