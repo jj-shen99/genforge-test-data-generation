@@ -197,6 +197,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 .auth-links a:hover { filter:brightness(1.2); }
 .auth-success { color:var(--green-tx); font-size:14px; margin-top:10px; min-height:20px; }
 
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 /* ML Analysis page */
 .ml-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin-bottom:16px; }
 .ml-card { background:var(--bg-1); border:1px solid var(--bd); border-radius:var(--radius); padding:20px; transition:border-color .15s; }
@@ -246,15 +247,15 @@ tr:hover td { background:rgba(255,255,255,0.02); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>
         Generate & push
       </div>
+      <div class="nav-section">Intelligence</div>
+      <div class="nav-item" data-page="ml">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.1-.9 2-2 2h-4a2 2 0 01-2-2 4 4 0 014-4z"/><path d="M8 8v2a4 4 0 004 4 4 4 0 004-4V8"/><path d="M6 14a6 6 0 006 6 6 6 0 006-6"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+        Schema analysis
+      </div>
       <div class="nav-section">Reference</div>
       <div class="nav-item" data-page="connectors">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
         Connector catalog
-      </div>
-      <div class="nav-section">Intelligence</div>
-      <div class="nav-item" data-page="ml">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.1-.9 2-2 2h-4a2 2 0 01-2-2 4 4 0 014-4z"/><path d="M8 8v2a4 4 0 004 4 4 4 0 004-4V8"/><path d="M6 14a6 6 0 006 6 6 6 0 006-6"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-        ML analysis
       </div>
       <div class="nav-item" data-page="users" id="nav-users" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -1170,7 +1171,7 @@ function navigate(page){
   if(page==='users' && !isAdmin()) return;
   state.currentPage = page;
   $$('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
-  const titles = {dashboard:'Dashboard',schemas:'Schema studio',generate:'Generate & push',connectors:'Connector catalog',users:'User Management'};
+  const titles = {dashboard:'Dashboard',schemas:'Schema studio',generate:'Generate & push',connectors:'Connector catalog',users:'User Management',ml:'Schema Intelligence'};
   $('#page-title').textContent = titles[page]||page;
   render();
 }
@@ -1290,6 +1291,8 @@ function _mlAnalyzeSchema(schemaObj) {
     if(f['x-datagen-unique']) { fScore += 5; traits.push('unique'); }
     if(f['x-datagen-depends-on']) { fScore += 10; traits.push('dependent'); }
     if(f.minimum !== undefined || f.maximum !== undefined) { fScore += 5; traits.push('bounded'); }
+    if(f['x-datagen-future']) { fScore += 5; traits.push('future-date'); }
+    if(f['x-datagen-date-pair']) { fScore += 5; traits.push('date-pair:'+f['x-datagen-date-pair']); }
     // Warnings
     if(!f.type && !f.enum && !f['$ref']) warnings.push('Missing type');
     if(f.type==='string' && !f.format && !f.enum && !f.pattern && !f['x-datagen-faker']) warnings.push('Generic string — add faker or enum');
@@ -1330,7 +1333,7 @@ function _mlAnalyzeSchema(schemaObj) {
 
   if(!schemaObj.description) insights.push({type:'info', text:'Add a description to improve schema discoverability.'});
 
-  return {overallScore, descScore, tagScore, avgFieldScore, totalFields, fieldAnalysis, typeDistribution, enumFields: enumFields.length, fakerFields: fakerFields.length, weightedFields: weightedFields.length, insights};
+  return {overallScore, descScore, tagScore, avgFieldScore, totalFields, fieldAnalysis, typeDistribution, enumFields: enumFields.length, fakerFields: fakerFields.length, weightedFields: weightedFields.length, insights, schemaName: schemaObj.name, schemaCategory: schemaObj.category||'uncategorized', schemaTags: schemaObj.tags||[], schemaDescription: schemaObj.description||''};
 }
 
 function _mlScoreColor(score) {
@@ -1345,20 +1348,132 @@ function _mlBarColor(score) {
   return 'var(--red)';
 }
 
+function _mlScoreLabel(score) {
+  if(score >= 80) return 'Excellent';
+  if(score >= 50) return 'Good';
+  return 'Needs work';
+}
+
 function _mlInsightIcon(type) {
   return type==='success'?'&#9989;':type==='info'?'&#128161;':type==='warn'?'&#9888;&#65039;':'&#10060;';
 }
 
-function _mlRunAnalysis() {
-  if(!_mlSelectedSchema) return;
+function _mlSelectAndRun(id) {
+  _mlSelectedSchema = id;
   _mlRunning = true;
   render();
   setTimeout(() => {
-    const s = state.schemas.find(x=>x.id===_mlSelectedSchema);
+    const s = state.schemas.find(x=>x.id===id);
     if(s) _mlResults = _mlAnalyzeSchema(s);
     _mlRunning = false;
     render();
-  }, 400);
+  }, 350);
+}
+
+function _mlRunAnalysis() {
+  if(!_mlSelectedSchema) return;
+  _mlSelectAndRun(_mlSelectedSchema);
+}
+
+function _mlLoadSchemaFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        let parsed = JSON.parse(ev.target.result);
+        let schema = parsed, name = file.name.replace(/\.json$/i,''), desc = '', tags = [], cat = 'imported';
+        // Handle wrapped format {name, schema, ...}
+        if(parsed.schema && typeof parsed.schema === 'object' && parsed.schema.properties) {
+          schema = parsed.schema; name = parsed.name || name; desc = parsed.description || ''; tags = parsed.tags || []; cat = parsed.category || 'imported';
+        } else if(parsed.properties) {
+          schema = parsed;
+        } else if(parsed.type === 'object' && parsed.properties) {
+          schema = parsed;
+        } else {
+          alert('Invalid schema format. Expected JSON Schema with "properties" or wrapped format with "schema" key.');
+          return;
+        }
+        const id = 'ml_imported_' + Date.now();
+        const imported = {id, name, description: desc, schema, category: cat, tags, created_at: new Date().toISOString(), updated_at: new Date().toISOString()};
+        state.schemas.push(imported);
+        _mlSelectAndRun(id);
+      } catch(err) { alert('Failed to parse JSON: ' + err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function _mlDownloadReport() {
+  if(!_mlResults) return;
+  const res = _mlResults;
+  const sel = state.schemas.find(x=>x.id===_mlSelectedSchema);
+  const now = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const lines = [];
+  lines.push('=' .repeat(72));
+  lines.push('GENFORGE SCHEMA INTELLIGENCE REPORT');
+  lines.push('=' .repeat(72));
+  lines.push('');
+  lines.push(`Schema:      ${res.schemaName}`);
+  lines.push(`Category:    ${res.schemaCategory}`);
+  lines.push(`Tags:        ${res.schemaTags.join(', ') || 'none'}`);
+  lines.push(`Description: ${res.schemaDescription || 'none'}`);
+  lines.push(`Generated:   ${new Date().toLocaleString()}`);
+  lines.push('');
+  lines.push('-'.repeat(72));
+  lines.push('QUALITY SCORE');
+  lines.push('-'.repeat(72));
+  lines.push(`Overall Score:     ${res.overallScore}/100  (${_mlScoreLabel(res.overallScore)})`);
+  lines.push(`Description:       ${res.descScore}/20`);
+  lines.push(`Tags:              ${res.tagScore}/15`);
+  lines.push(`Avg Field Quality: ${res.avgFieldScore}/100`);
+  lines.push(`Total Fields:      ${res.totalFields}`);
+  lines.push(`Enum Fields:       ${res.enumFields}`);
+  lines.push(`Faker Fields:      ${res.fakerFields}`);
+  lines.push(`Weighted Fields:   ${res.weightedFields}`);
+  lines.push('');
+  lines.push('-'.repeat(72));
+  lines.push('TYPE DISTRIBUTION');
+  lines.push('-'.repeat(72));
+  Object.entries(res.typeDistribution).sort((a,b)=>b[1]-a[1]).forEach(([t,c]) => {
+    const pct = Math.round(c/res.totalFields*100);
+    const bar = '#'.repeat(Math.round(pct/2));
+    lines.push(`  ${t.padEnd(12)} ${String(c).padStart(3)}  ${String(pct+'%').padStart(4)}  ${bar}`);
+  });
+  lines.push('');
+  lines.push('-'.repeat(72));
+  lines.push('INSIGHTS & RECOMMENDATIONS');
+  lines.push('-'.repeat(72));
+  res.insights.forEach((ins,i) => {
+    const label = ins.type==='success'?'[OK]':ins.type==='info'?'[INFO]':ins.type==='warn'?'[WARN]':'[ERROR]';
+    lines.push(`  ${i+1}. ${label.padEnd(8)} ${ins.text}`);
+  });
+  lines.push('');
+  lines.push('-'.repeat(72));
+  lines.push('FIELD PROFILING');
+  lines.push('-'.repeat(72));
+  lines.push(`  ${'Field'.padEnd(28)} ${'Type'.padEnd(10)} ${'Score'.padEnd(7)} Traits`);
+  lines.push('  ' + '-'.repeat(68));
+  res.fieldAnalysis.forEach(f => {
+    lines.push(`  ${f.name.padEnd(28)} ${f.type.padEnd(10)} ${String(f.score).padStart(3).padEnd(7)} ${f.traits.join(', ')||'none'}`);
+    if(f.warnings.length) f.warnings.forEach(w => lines.push(`  ${''.padEnd(28)} ${''.padEnd(10)} ${''.padEnd(7)} !! ${w}`));
+  });
+  lines.push('');
+  lines.push('='.repeat(72));
+  lines.push('End of report');
+  lines.push('='.repeat(72));
+
+  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `schema-report-${res.schemaName.replace(/\s+/g,'-').toLowerCase()}-${now}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function renderMLAnalysis(){
@@ -1374,6 +1489,27 @@ function renderMLAnalysis(){
   const res = _mlResults;
 
   return `
+  <!-- Banner -->
+  <div class="ml-card" style="background:linear-gradient(135deg, var(--accent-bg), var(--bg-1) 80%);border-left:4px solid var(--accent);margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <h4 style="font-size:20px;margin-bottom:4px">Schema Intelligence</h4>
+        <p style="margin:0">Automated quality analysis, field profiling, type distribution, and actionable recommendations for your schema portfolio.</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="_mlLoadSchemaFile()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:-3px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Load schema
+        </button>
+        ${res ? `<button class="btn btn-primary" onclick="_mlDownloadReport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;vertical-align:-3px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download report
+        </button>` : ''}
+      </div>
+    </div>
+  </div>
+
+  <!-- Portfolio overview cards -->
   <div class="ml-grid">
     <div class="ml-card">
       <div class="ml-card-icon">&#129504;</div>
@@ -1399,12 +1535,12 @@ function renderMLAnalysis(){
     </div>
   </div>
 
+  <!-- Schema selector + results -->
   <div style="display:grid;grid-template-columns:280px 1fr;gap:16px">
-    <!-- Schema selector -->
     <div class="ml-card" style="max-height:600px;overflow-y:auto">
-      <h4 style="margin-bottom:12px">Select Schema</h4>
+      <h4 style="margin-bottom:12px">Schemas</h4>
       ${allResults.sort((a,b)=>a.result.overallScore-b.result.overallScore).map(x => `
-        <div style="padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;margin-bottom:2px;border:1px solid ${_mlSelectedSchema===x.schema.id?'var(--accent)':'transparent'};background:${_mlSelectedSchema===x.schema.id?'var(--accent-bg)':'transparent'};transition:all .12s" onclick="_mlSelectedSchema='${x.schema.id}';_mlResults=null;render()">
+        <div style="padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;margin-bottom:2px;border:1px solid ${_mlSelectedSchema===x.schema.id?'var(--accent)':'transparent'};background:${_mlSelectedSchema===x.schema.id?'var(--accent-bg)':'transparent'};transition:all .12s" onclick="_mlSelectAndRun('${x.schema.id}')">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-size:13px;${_mlSelectedSchema===x.schema.id?'color:var(--accent-tx);font-weight:500':''}">${x.schema.name}</span>
             <span style="font-size:12px;font-weight:600;color:${_mlScoreColor(x.result.overallScore)}">${x.result.overallScore}</span>
@@ -1414,60 +1550,75 @@ function renderMLAnalysis(){
       `).join('')}
     </div>
 
-    <!-- Analysis results -->
     <div>
-      ${!sel ? `<div class="ml-card" style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:12px">&#128270;</div><h4>Select a schema to analyze</h4><p>Pick a schema from the left panel to see detailed ML-powered quality analysis, field profiling, and improvement recommendations.</p></div>` :
-      !res ? `<div class="ml-card" style="text-align:center;padding:40px 20px">
-        <h4>${sel.name}</h4>
-        <p style="margin:8px 0 16px">${sel.description || 'No description'}</p>
-        <button class="btn btn-primary" onclick="_mlRunAnalysis()" ${_mlRunning?'disabled':''}>${_mlRunning?'Analyzing...':'Run Analysis'}</button>
-      </div>` :
+      ${_mlRunning ? `<div class="ml-card" style="text-align:center;padding:60px 20px"><div style="font-size:32px;margin-bottom:12px;animation:pulse 1s infinite">&#129504;</div><h4>Analyzing schema...</h4><p>Running quality analysis, field profiling, and generating insights.</p></div>` :
+      !sel || !res ? `<div class="ml-card" style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:12px">&#128270;</div><h4>Select a schema to analyze</h4><p>Pick a schema from the panel or load a JSON schema file to see detailed quality analysis, field profiling, and improvement recommendations.</p></div>` :
       `
       <!-- Score breakdown -->
       <div class="ml-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h4>${sel.name}</h4>
-          <span class="tag tag-${res.overallScore>=80?'green':res.overallScore>=50?'amber':'red'}" style="font-size:14px">${res.overallScore}/100</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div>
+            <h4 style="margin-bottom:2px">${sel.name}</h4>
+            <p style="margin:0">${sel.description || ''}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tag tag-${res.overallScore>=80?'green':res.overallScore>=50?'amber':'red'}" style="font-size:14px;padding:4px 12px">${res.overallScore}/100</span>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0">
           <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700;color:${_mlScoreColor(res.overallScore)}">${res.overallScore}</div><div style="font-size:11px;color:var(--tx-2)">Overall</div></div>
           <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.totalFields}</div><div style="font-size:11px;color:var(--tx-2)">Fields</div></div>
-          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.enumFields}</div><div style="font-size:11px;color:var(--tx-2)">Enum fields</div></div>
-          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.fakerFields}</div><div style="font-size:11px;color:var(--tx-2)">Faker fields</div></div>
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.enumFields}</div><div style="font-size:11px;color:var(--tx-2)">Enums</div></div>
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.fakerFields}</div><div style="font-size:11px;color:var(--tx-2)">Fakers</div></div>
+          <div style="text-align:center;padding:10px;background:var(--bg-2);border-radius:var(--radius-sm)"><div style="font-size:22px;font-weight:700">${res.weightedFields}</div><div style="font-size:11px;color:var(--tx-2)">Weighted</div></div>
         </div>
+      </div>
 
-        <!-- Insights -->
+      <!-- Insights -->
+      <div class="ml-card">
         <h4 style="margin-bottom:8px">Insights & Recommendations</h4>
         ${res.insights.map(i => `<div class="ml-insight"><span class="icon">${_mlInsightIcon(i.type)}</span><span>${i.text}</span></div>`).join('')}
       </div>
 
-      <!-- Field-level analysis -->
-      <div class="ml-card">
-        <h4 style="margin-bottom:12px">Field Profiling</h4>
-        <table>
-          <tr><th>Field</th><th>Type</th><th>Score</th><th>Traits</th><th>Issues</th></tr>
-          ${res.fieldAnalysis.map(f => `
-            <tr>
-              <td style="font-family:var(--mono);font-size:12px">${f.name}</td>
-              <td><span class="tag tag-purple">${f.type}</span></td>
-              <td><span style="font-weight:600;color:${_mlScoreColor(f.score)}">${f.score}</span></td>
-              <td>${f.traits.length?f.traits.map(t=>'<span class="tag tag-blue" style="font-size:10px;margin:1px">'+t+'</span>').join(''):'<span style="color:var(--tx-2);font-size:12px">none</span>'}</td>
-              <td>${f.warnings.length?f.warnings.map(w=>'<span style="color:var(--amber-tx);font-size:12px">'+w+'</span>').join('<br>'):'<span style="color:var(--green-tx);font-size:12px">OK</span>'}</td>
-            </tr>
-          `).join('')}
-        </table>
+      <!-- Field profiling + Type distribution side by side -->
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
+        <div class="ml-card">
+          <h4 style="margin-bottom:12px">Field Profiling</h4>
+          <table>
+            <tr><th>Field</th><th>Type</th><th>Score</th><th>Traits</th><th>Issues</th></tr>
+            ${res.fieldAnalysis.map(f => `
+              <tr>
+                <td style="font-family:var(--mono);font-size:12px">${f.name}</td>
+                <td><span class="tag tag-purple">${f.type}</span></td>
+                <td><span style="font-weight:600;color:${_mlScoreColor(f.score)}">${f.score}</span></td>
+                <td>${f.traits.length?f.traits.map(t=>'<span class="tag tag-blue" style="font-size:10px;margin:1px">'+t+'</span>').join(''):'<span style="color:var(--tx-2);font-size:12px">none</span>'}</td>
+                <td>${f.warnings.length?f.warnings.map(w=>'<span style="color:var(--amber-tx);font-size:12px">'+w+'</span>').join('<br>'):'<span style="color:var(--green-tx);font-size:12px">OK</span>'}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+
+        <div class="ml-card">
+          <h4 style="margin-bottom:12px">Type Distribution</h4>
+          ${Object.entries(res.typeDistribution).sort((a,b)=>b[1]-a[1]).map(([type,count]) => {
+            const pct = Math.round(count/res.totalFields*100);
+            return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+type+'</span><span style="color:var(--tx-2)">'+count+' ('+pct+'%)</span></div><div class="ml-bar-track"><div class="ml-bar-fill" style="width:'+pct+'%;background:var(--accent)"></div></div></div>';
+          }).join('')}
+          <div style="border-top:1px solid var(--bd);padding-top:12px;margin-top:8px">
+            <div class="ml-stat-row" style="padding:4px 0"><span class="ml-stat-label">Desc score</span><span class="ml-stat-value">${res.descScore}/20</span></div>
+            <div class="ml-stat-row" style="padding:4px 0"><span class="ml-stat-label">Tags score</span><span class="ml-stat-value">${res.tagScore}/15</span></div>
+            <div class="ml-stat-row" style="padding:4px 0;border:none"><span class="ml-stat-label">Avg field quality</span><span class="ml-stat-value">${res.avgFieldScore}/100</span></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Type distribution -->
-      <div class="ml-card">
-        <h4 style="margin-bottom:12px">Type Distribution</h4>
-        ${Object.entries(res.typeDistribution).sort((a,b)=>b[1]-a[1]).map(([type,count]) => {
-          const pct = Math.round(count/res.totalFields*100);
-          return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>'+type+'</span><span style="color:var(--tx-2)">'+count+' ('+pct+'%)</span></div><div class="ml-bar-track"><div class="ml-bar-fill" style="width:'+pct+'%;background:var(--accent)"></div></div></div>';
-        }).join('')}
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn" onclick="_mlRunAnalysis()">Re-run analysis</button>
+        <button class="btn btn-primary" onclick="_mlDownloadReport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download report
+        </button>
       </div>
-
-      <button class="btn btn-primary" onclick="_mlRunAnalysis()" style="margin-top:4px" ${_mlRunning?'disabled':''}>Re-run Analysis</button>
       `}
     </div>
   </div>`;

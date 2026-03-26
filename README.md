@@ -250,7 +250,7 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 - **User registration** — self-service account creation with email (optional), auto-login after signup
 - **Forgot password** — reset password by username or email from the login screen
 - **User management** — admin panel for creating and deleting users
-- **ML schema analysis** — portfolio quality scoring, per-schema field profiling, type distribution, actionable insights & recommendations
+- **Schema Intelligence** — portfolio quality scoring, per-schema field profiling, type distribution, actionable insights, load external schemas for analysis, downloadable text reports
 - **PostgreSQL persistence** — schemas, connections, jobs, and users survive server restarts
 - **Light / Dark theme** — toggle in sidebar footer, persisted to localStorage
 - **Load schema from file** — import JSON Schema files (raw or wrapped format) via file picker

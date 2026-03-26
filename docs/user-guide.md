@@ -174,21 +174,29 @@ View all generation jobs with real-time status.
 
 Reference page listing all 16 supported connectors, alphabetically sorted and grouped by category, with type identifiers and supported auth methods.
 
-### ML Analysis
+### Schema Intelligence
 
-The **ML Analysis** page (under the Intelligence section in the sidebar) provides automated schema quality analysis:
+The **Schema Intelligence** page (under the Intelligence section in the sidebar) provides automated schema quality analysis.
 
+**Banner & actions:**
+- **Load schema** — import a JSON Schema file from disk for one-off analysis (supports raw and wrapped formats)
+- **Download report** — export the current analysis as a formatted text report (available after running an analysis)
+
+**Portfolio overview (always visible):**
 - **Portfolio Quality Score** — aggregate quality score across all schemas (0–100)
 - **Schema Coverage** — total schemas, total fields, avg fields per schema, category count
 - **Quality Distribution** — breakdown into excellent (≥80), good (50–79), and needs-work (<50)
-- **Schema Selector** — pick any schema to analyze, sorted by quality score with mini progress bars
-- **Per-Schema Analysis** — click "Run Analysis" to see:
-  - Score breakdown (overall, field count, enum fields, faker fields)
-  - Insights & recommendations (actionable tips to improve data realism)
-  - Field profiling table (per-field type, score, traits like weighted/faker/pattern, and warnings)
-  - Type distribution chart (visual bars showing field type proportions)
 
-The quality score considers: description, tags, field types, formats, enums, weights, faker providers, patterns, distributions, null rates, uniqueness, dependencies, and bounds.
+**Per-schema analysis:**
+1. Click any schema in the left panel — analysis runs automatically
+2. Results appear on the right:
+   - **Score breakdown** — overall score, total fields, enums, fakers, weighted fields (5-column grid)
+   - **Insights & Recommendations** — actionable tips to improve data realism
+   - **Field Profiling** — per-field table with type, score, traits (weighted, faker, pattern, etc.), and warnings
+   - **Type Distribution** — visual bars showing field type proportions, plus description/tag/field quality sub-scores
+3. Click **Re-run analysis** to refresh, or **Download report** for an exportable text file
+
+The quality score considers: description, tags, field types, formats, enums, weights, faker providers, patterns, distributions, null rates, uniqueness, dependencies, bounds, future-date, and date-pair constraints.
 
 ### User Management (Admin only)
 
