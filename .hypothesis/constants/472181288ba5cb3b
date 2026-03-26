@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/aws_sqs.py
+# hypothesis_version: 6.141.1
+
+[1000, '?', 'AWS SQS', 'Attributes', 'Failed', 'Id', 'MessageBody', 'Successful', 'access_key', 'aws_access_key_id', 'aws_session_token', 'aws_sqs', 'cloud', 'endpoint_url', 'queue_url', 'region', 'region_name', 'secret_key', 'session_token', 'sqs', 'sqs.amazonaws.com', 'us-east-1']

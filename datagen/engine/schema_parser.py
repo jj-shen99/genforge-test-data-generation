@@ -133,6 +133,18 @@ def generate_record(schema: dict, context: dict | None = None) -> dict:
         value = _generate_field(field_name, field_schema, context, parser)
         result[field_name] = value
 
+    # Date-pair post-processing: ensure start < end for x-datagen-date-pair fields
+    date_pairs = {}
+    for field_name, field_schema in properties.items():
+        pair_role = field_schema.get("x-datagen-date-pair")
+        if pair_role and field_name in result:
+            date_pairs[pair_role] = field_name
+    if "start" in date_pairs and "end" in date_pairs:
+        s_key, e_key = date_pairs["start"], date_pairs["end"]
+        s_val, e_val = result.get(s_key, ""), result.get(e_key, "")
+        if s_val and e_val and s_val > e_val:
+            result[s_key], result[e_key] = e_val, s_val
+
     # Second pass: generate dependent fields
     for field_name, field_schema in dependent_fields:
         dep = field_schema["x-datagen-depends-on"]

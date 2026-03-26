@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/models/models.py
+# hypothesis_version: 6.141.1
+
+[100, 500, 'api_key', 'aws_iam', 'basic', 'bearer_token', 'cancelled', 'completed', 'custom', 'failed', 'json', 'mtls', 'oauth2', 'pending', 'running', 'schema', 'unknown']

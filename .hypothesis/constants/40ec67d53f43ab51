@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/base.py
+# hypothesis_version: 6.141.1
+
+[0.0, 500, 'Base Connector', 'api_key', 'aws_iam', 'base', 'basic', 'batch_size', 'bearer_token', 'certificate', 'connected', 'connecting', 'disconnected', 'error', 'generic', 'kerberos', 'mtls', 'oauth2', 'rate_limited', 'saml', 'ssh_key']

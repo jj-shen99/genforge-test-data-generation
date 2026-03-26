@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/kafka.py
+# hypothesis_version: 6.141.1
+
+[1000, 'Apache Kafka', 'PLAIN', 'SASL_SSL', 'SSL', 'batch.num.messages', 'bigdata', 'bootstrap.servers', 'ca_path', 'cert_path', 'client.id', 'compression', 'compression.type', 'genforge-producer', 'kafka', 'key_field', 'key_path', 'linger.ms', 'password', 'sasl.mechanisms', 'sasl.password', 'sasl.username', 'security.protocol', 'snappy', 'ssl.ca.location', 'ssl.key.location', 'test-data', 'topic', 'topics', 'username', 'utf-8']

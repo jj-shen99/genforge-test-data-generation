@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/registry.py
+# hypothesis_version: 6.141.1
+
+['auth_methods', 'category', 'datagen.connectors', 'name', 'select', 'type']

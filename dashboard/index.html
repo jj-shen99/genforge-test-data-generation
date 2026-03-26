@@ -573,9 +573,9 @@ const DEMO_CONNECTORS = [
 
 const DEMO_SCHEMAS = [
   {id:'s1',name:'ServiceNow Incident',description:'ITSM incident records with priority, state, and assignment fields',category:'servicenow',tags:['itsm','incident'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-02-20T14:12:00Z',
-   schema:{type:'object',properties:{number:{type:'string',pattern:'INC[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},urgency:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,40,50]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[1,2,3,6,7],'x-datagen-weight':[15,25,20,30,10]},category:{type:'string',enum:['Network','Hardware','Software','Database','Security','Cloud'],'x-datagen-weight':[20,15,30,15,10,10]},assigned_to:{type:'string','x-datagen-faker':'person.name'},caller_id:{type:'string','x-datagen-faker':'person.name'},opened_at:{type:'string',format:'date-time'},cmdb_ci:{type:'string',format:'uuid'},close_code:{type:'string',enum:['Solved (Work Around)','Solved (Permanently)','Solved Remotely (Work Around)','Solved Remotely (Permanently)','Not Solved (Not Reproducible)','Not Solved (Too Costly)','Closed/Resolved by Caller'],'x-datagen-weight':[20,30,10,15,10,5,10]},close_notes:{type:'string','x-datagen-faker':'sentence'}}}},
+   schema:{type:'object',properties:{short_description:{type:'string','x-datagen-faker':'sentence'},priority:{type:'integer',enum:[1,2,3,4],'x-datagen-weight':[5,20,50,25]},urgency:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,40,50]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[1]},category:{type:'string',enum:['Network','Hardware','Software','Database','Security','Cloud'],'x-datagen-weight':[20,15,30,15,10,10]},assigned_to:{type:'string','x-datagen-faker':'person.name'},caller_id:{type:'string','x-datagen-faker':'person.name'},cmdb_ci:{type:'string',format:'uuid'}}}},
   {id:'s2',name:'ServiceNow Change Request',description:'Change management records for ITSM workflows',category:'servicenow',tags:['itsm','change'],created_at:'2025-11-15T08:30:00Z',updated_at:'2026-01-10T09:45:00Z',
-   schema:{type:'object',properties:{number:{type:'string',pattern:'CHG[0-9]{7}'},short_description:{type:'string','x-datagen-faker':'sentence'},type:{type:'string',enum:['Normal','Standard','Emergency'],'x-datagen-weight':[50,35,15]},risk:{type:'string',enum:['High','Moderate','Low'],'x-datagen-weight':[15,50,35]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[-5,-4,-3,-2,-1,0,3],'x-datagen-weight':[15,10,20,10,15,20,10]},start_date:{type:'string',format:'date-time'},end_date:{type:'string',format:'date-time'},assigned_to:{type:'string','x-datagen-faker':'person.name'},cmdb_ci:{type:'string',format:'uuid'}}}},
+   schema:{type:'object',properties:{short_description:{type:'string','x-datagen-faker':'sentence'},type:{type:'string',enum:['Normal','Standard','Emergency'],'x-datagen-weight':[50,35,15]},risk:{type:'string',enum:['High','Moderate','Low'],'x-datagen-weight':[15,50,35]},impact:{type:'integer',enum:[1,2,3],'x-datagen-weight':[10,35,55]},state:{type:'integer',enum:[-5]},start_date:{type:'string',format:'date-time','x-datagen-future':true,'x-datagen-date-pair':'start'},end_date:{type:'string',format:'date-time','x-datagen-future':true,'x-datagen-date-pair':'end'},assigned_to:{type:'string','x-datagen-faker':'person.name'},cmdb_ci:{type:'string',format:'uuid'}}}},
   {id:'s3',name:'ServiceNow CMDB CI',description:'Configuration items for CMDB population',category:'servicenow',tags:['cmdb','ci'],created_at:'2025-12-01T10:00:00Z',updated_at:'2026-03-01T16:20:00Z',
    schema:{type:'object',properties:{sys_id:{type:'string',format:'uuid'},name:{type:'string','x-datagen-faker':'domainName'},sys_class_name:{type:'string',enum:['cmdb_ci_server','cmdb_ci_vm','cmdb_ci_app_server','cmdb_ci_database','cmdb_ci_netgear','cmdb_ci_service'],'x-datagen-weight':[25,30,15,15,5,10]},operational_status:{type:'integer',enum:[1,2,5,6],'x-datagen-weight':[60,20,10,10]},ip_address:{type:'string',format:'ipv4'},os:{type:'string',enum:['Linux','Windows Server 2022','RHEL 9','Ubuntu 22.04','VMware ESXi'],'x-datagen-weight':[30,20,20,20,10]},environment:{type:'string',enum:['Production','Staging','Development','DR'],'x-datagen-weight':[40,25,25,10]},manufacturer:{type:'string',enum:['Dell','HP','Lenovo','Cisco','VMware','AWS'],'x-datagen-weight':[25,25,15,15,10,10]},asset_tag:{type:'string',pattern:'ASSET[0-9]{6}'}}}},
   {id:'s4',name:'VictoriaMetrics Time Series',description:'Time-series metric samples for VictoriaMetrics import',category:'observability',tags:['victoriametrics','metrics'],created_at:'2025-12-10T11:00:00Z',updated_at:'2026-02-28T13:30:00Z',
@@ -1810,7 +1810,7 @@ function _weightedPick(values, weights) {
 }
 function _genRealisticValue(k, v, i) {
   if(v.enum) return _weightedPick(v.enum, v['x-datagen-weight']);
-  if(v.format==='date-time') return new Date(Date.now()-Math.random()*86400000*90).toISOString();
+  if(v.format==='date-time') { if(v['x-datagen-future']) return new Date(Date.now()+86400000+Math.random()*86400000*89).toISOString(); return new Date(Date.now()-Math.random()*86400000*90).toISOString(); }
   if(v.format==='date') { const d=new Date(Date.now()-Math.random()*86400000*90); return d.toISOString().split('T')[0]; }
   if(v.format==='uuid') return _uuid();
   if(v.format==='ipv4') return _pick(_ips);
@@ -1864,6 +1864,15 @@ function runPreview(){
     const rec = {};
     for(const[k,v] of Object.entries(s.schema.properties||{})){
       rec[k] = _genRealisticValue(k, v, i);
+    }
+    // Date-pair post-processing: ensure start < end
+    const pairs = {};
+    for(const[k,v] of Object.entries(s.schema.properties||{})){
+      const role = v['x-datagen-date-pair'];
+      if(role && rec[k]) pairs[role] = k;
+    }
+    if(pairs.start && pairs.end && rec[pairs.start] > rec[pairs.end]){
+      [rec[pairs.start], rec[pairs.end]] = [rec[pairs.end], rec[pairs.start]];
     }
     records.push(rec);
   }

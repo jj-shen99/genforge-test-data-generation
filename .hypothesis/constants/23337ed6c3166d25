@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/redis_connector.py
+# hypothesis_version: 6.141.1
+
+[1000, 6379, 'Redis', 'data_type', 'database', 'db', 'genforge:', 'genforge:records', 'hash', 'key_prefix', 'list', 'list_name', 'localhost', 'password', 'redis', 'redis_version', 'server', 'ssl', 'string', 'ttl', 'unknown', 'username', 'version']

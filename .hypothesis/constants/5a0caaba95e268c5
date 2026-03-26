@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/cribl.py
+# hypothesis_version: 6.141.1
+
+[200, 201, 204, 1000, 9514, '/', 'Content-Type', 'Cribl Stream', 'application/json', 'cribl', 'endpoint', 'http', 'http://', 'https', 'https://', 'observability', 'ssl', 'verify_ssl']

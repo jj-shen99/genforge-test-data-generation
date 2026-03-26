@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/grafana_loki.py
+# hypothesis_version: 6.141.1
+
+[1000000000.0, 200, 204, 1000, 3100, '+00:00', ',', '/', 'Content-Type', 'Grafana Loki', 'Z', 'application/json', 'container', 'genforge', 'grafana_loki', 'http', 'http://', 'https', 'https://', 'label_fields', 'level', 'line', 'message', 'namespace', 'observability', 'service', 'source', 'ssl', 'stream', 'streams', 'timestamp', 'values', 'verify_ssl']

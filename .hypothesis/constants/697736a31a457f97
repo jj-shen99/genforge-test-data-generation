@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/postgres.py
+# hypothesis_version: 6.141.1
+
+[1000, '%s', ', ', 'Connected', 'PostgreSQL', 'SELECT 1', 'bigint', 'boolean', 'character', 'character varying', 'database', 'date', 'date-time', 'double precision', 'format', 'integer', 'json', 'jsonb', 'number', 'numeric', 'object', 'postgresql', 'properties', 'public', 'real', 'schema', 'smallint', 'string', 'table', 'test_data', 'text', 'type', 'uuid']

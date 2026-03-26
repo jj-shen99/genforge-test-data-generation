@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/aws_dynamodb.py
+# hypothesis_version: 6.141.1
+
+[1000, 'AWS DynamoDB', '_', 'access_key', 'amazonaws', 'aws_access_key_id', 'aws_dynamodb', 'cloud', 'dynamodb', 'endpoint_url', 'region', 'region_name', 'secret_key', 'table', 'test_data', 'us-east-1']

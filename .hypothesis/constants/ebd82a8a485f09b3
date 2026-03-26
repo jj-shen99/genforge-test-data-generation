@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/clickhouse.py
+# hypothesis_version: 6.141.1
+
+[200, 1000, 8123, '/', 'ClickHouse', 'ClickHouse reachable', 'Content-Type', 'application/json', 'clickhouse', 'database', 'default', 'events', 'http', 'http://', 'https', 'https://', 'query', 'ssl', 'table', 'verify_ssl']

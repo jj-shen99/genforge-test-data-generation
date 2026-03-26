@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/engine/schema_parser.py
+# hypothesis_version: 6.141.1
+
+[100, '#/$defs/', '#/definitions/', '$defs', '$ref', '/', '_index', '_parser', '_total', 'allOf', 'anyOf', 'const', 'definitions', 'end', 'enum', 'field', 'format', 'null', 'object', 'oneOf', 'properties', 'required', 'rules', 'start', 'string', 'type', 'x-datagen-date-pair', 'x-datagen-depends-on', 'x-datagen-faker', 'x-datagen-null-rate', 'x-datagen-ref', 'x-datagen-track-as', 'x-datagen-unique', 'x-datagen-weight']

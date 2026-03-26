@@ -327,10 +327,15 @@ def gen_datetime(schema: dict, context: dict | None = None) -> str:
     time_pattern = schema.get("x-datagen-time-pattern", {})
     now = datetime.now(timezone.utc)
 
-    base_str = time_pattern.get("base", "now-30d")
-    base = _parse_time_base(base_str, now)
+    # x-datagen-future: generate dates in the future (1-90 days ahead)
+    if schema.get("x-datagen-future"):
+        base_str = time_pattern.get("base", "now+1d")
+        end_str = time_pattern.get("end", "now+90d")
+    else:
+        base_str = time_pattern.get("base", "now-30d")
+        end_str = time_pattern.get("end", "now")
 
-    end_str = time_pattern.get("end", "now")
+    base = _parse_time_base(base_str, now)
     end = _parse_time_base(end_str, now)
 
     # Random point between base and end

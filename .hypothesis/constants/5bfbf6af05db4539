@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/auth.py
+# hypothesis_version: 6.141.1
+
+['Authorization', 'X-API-Key', 'access_key', 'api_key', 'client_credentials', 'client_id', 'client_secret', 'grant_type', 'header', 'in', 'key', 'param_name', 'password', 'prefix', 'query', 'region', 'role_arn', 'scope', 'secret_key', 'session_token', 'token', 'token_url', 'us-east-1', 'username']

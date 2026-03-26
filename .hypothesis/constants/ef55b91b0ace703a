@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/aws_s3.py
+# hypothesis_version: 6.141.1
+
+[1000, '%Y%m%dT%H%M%S', ',', 'AWS S3', 'access_key', 'application/json', 'application/x-ndjson', 'aws_access_key_id', 'aws_s3', 'aws_session_token', 'bucket', 'cloud', 'csv', 'endpoint_url', 'format', 'generated/', 'genforge-output', 'json', 'jsonl', 'key', 'prefix', 'region', 'region_name', 's3', 's3.amazonaws.com', 'secret_key', 'session_token', 'size_bytes', 'text/csv', 'us-east-1', 'utf-8']

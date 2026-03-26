@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/victoriametrics.py
+# hypothesis_version: 6.141.1
+
+[1000000000000.0, 200, 204, 1000, 8428, '+00:00', ',', '/', '/import', 'Content-Type', 'VictoriaMetrics', 'Z', '__name__', 'api_mode', 'application/json', 'endpoint', 'http', 'http://', 'https', 'https://', 'import', 'labels', 'lines', 'metric', 'observability', 'ssl', 'test_metric', 'text/plain', 'timestamp', 'timestamp_epoch_ms', 'timestamps', 'value', 'values', 'verify_ssl', 'victoriametrics', 'write']
