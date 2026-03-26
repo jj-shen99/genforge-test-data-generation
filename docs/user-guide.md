@@ -131,10 +131,16 @@ Configure connections to external push targets.
 
 **Adding a connection:**
 1. Click **+ New connection**
-2. Select the connector type (ServiceNow, Kafka, Elasticsearch, etc.)
-3. Fill in host, port, auth method, and credentials
-4. Add any connector-specific options as JSON (e.g., `{"table": "incident"}`)
-5. Click **Create**
+2. Select the **connector type** (ServiceNow, Kafka, Elasticsearch, etc.) — connector-specific settings appear automatically
+3. Fill in **host** and **port**
+4. Select an **auth method** — credential fields update dynamically:
+   - **Basic auth** → Username + Password
+   - **API key** → API Key Header + API Key Value
+   - **OAuth 2.0** → Client ID + Client Secret + Token URL
+   - **Bearer token** → Bearer Token
+   - **AWS IAM** → Access Key ID + Secret Access Key + AWS Region
+5. Review the auto-populated **connector settings** (e.g., table name, index, topic, bucket, SSL toggles) and adjust as needed
+6. Click **Create**
 
 **Testing a connection:**
 - Click **Test** on any connection card to verify connectivity

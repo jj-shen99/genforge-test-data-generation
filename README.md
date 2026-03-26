@@ -255,7 +255,7 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 - **Light / Dark theme** — toggle in sidebar footer, persisted to localStorage
 - **Load schema from file** — import JSON Schema files (raw or wrapped format) via file picker
 - **Schema category filters** — filter by all 14 categories with color-coded tags
-- **Connection management** — create connections with host, auth, and options (JSON) for connector-specific config
+- **Dynamic connection forms** — auth fields change per method (Basic, API Key, OAuth2, Bearer, AWS IAM); connector-specific settings auto-populate per target type (table, index, topic, bucket, etc.)
 - **Connection testing** — real backend API health check via connector `validate_connection()`
 - **Edge-case toggle** — inject boundary values (empty strings, minimums, nulls) for testing
 - **Copy & Download** — preview JSON with one-click copy or download

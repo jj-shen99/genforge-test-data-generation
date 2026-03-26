@@ -1541,6 +1541,140 @@ function viewSchema(id){
   $('#modal-root').appendChild(overlay);
 }
 
+const _AUTH_FIELDS = {
+  basic: [
+    {id:'mc-cred-user', label:'Username', type:'text', placeholder:'admin', key:'username'},
+    {id:'mc-cred-pass', label:'Password', type:'password', placeholder:'Enter password', key:'password'},
+  ],
+  api_key: [
+    {id:'mc-cred-key-name', label:'API Key Header', type:'text', placeholder:'X-API-Key', key:'key_name'},
+    {id:'mc-cred-key-value', label:'API Key Value', type:'password', placeholder:'Enter API key', key:'key_value'},
+  ],
+  oauth2: [
+    {id:'mc-cred-client-id', label:'Client ID', type:'text', placeholder:'client-id-xxx', key:'client_id'},
+    {id:'mc-cred-client-secret', label:'Client Secret', type:'password', placeholder:'Enter client secret', key:'client_secret'},
+    {id:'mc-cred-token-url', label:'Token URL', type:'text', placeholder:'https://auth.example.com/oauth/token', key:'token_url'},
+  ],
+  bearer_token: [
+    {id:'mc-cred-token', label:'Bearer Token', type:'password', placeholder:'Enter bearer token', key:'token'},
+  ],
+  aws_iam: [
+    {id:'mc-cred-access-key', label:'Access Key ID', type:'text', placeholder:'AKIAIOSFODNN7EXAMPLE', key:'access_key_id'},
+    {id:'mc-cred-secret-key', label:'Secret Access Key', type:'password', placeholder:'Enter secret access key', key:'secret_access_key'},
+    {id:'mc-cred-region', label:'AWS Region', type:'text', placeholder:'us-east-1', key:'region'},
+  ],
+};
+
+const _CONNECTOR_OPTIONS = {
+  servicenow: [
+    {key:'table', label:'Table name', placeholder:'incident', dflt:'incident'},
+    {key:'api_mode', label:'API mode', type:'select', options:['table','import_set','event'], dflt:'table'},
+    {key:'batch_size', label:'Batch size', type:'number', placeholder:'50', dflt:'50'},
+  ],
+  elasticsearch: [
+    {key:'index', label:'Index name', placeholder:'test-data', dflt:'test-data'},
+    {key:'pipeline', label:'Ingest pipeline (optional)', placeholder:'my-pipeline', dflt:''},
+    {key:'ssl', label:'Use SSL', type:'checkbox', dflt:true},
+    {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:true},
+  ],
+  mongodb: [
+    {key:'database', label:'Database', placeholder:'test', dflt:'test'},
+    {key:'collection', label:'Collection', placeholder:'test_data', dflt:'test_data'},
+    {key:'uri', label:'Connection URI (optional)', placeholder:'mongodb://localhost:27017', dflt:''},
+    {key:'auth_source', label:'Auth source', placeholder:'admin', dflt:'admin'},
+  ],
+  postgres: [
+    {key:'database', label:'Database', placeholder:'postgres', dflt:'postgres'},
+    {key:'schema', label:'Schema', placeholder:'public', dflt:'public'},
+    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
+  ],
+  kafka: [
+    {key:'topic', label:'Topic', placeholder:'test-data', dflt:'test-data'},
+    {key:'key_field', label:'Key field (optional)', placeholder:'id', dflt:''},
+    {key:'compression', label:'Compression', type:'select', options:['snappy','gzip','lz4','none'], dflt:'snappy'},
+  ],
+  aws_s3: [
+    {key:'bucket', label:'Bucket name', placeholder:'genforge-output', dflt:'genforge-output'},
+    {key:'prefix', label:'Key prefix', placeholder:'generated/', dflt:'generated/'},
+    {key:'format', label:'File format', type:'select', options:['jsonl','json','csv'], dflt:'jsonl'},
+  ],
+  aws_sqs: [
+    {key:'queue_url', label:'Queue URL', placeholder:'https://sqs.us-east-1.amazonaws.com/123456789/my-queue', dflt:''},
+  ],
+  aws_dynamodb: [
+    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
+  ],
+  aws_kinesis: [
+    {key:'stream_name', label:'Stream name', placeholder:'test-stream', dflt:'test-stream'},
+    {key:'partition_key', label:'Partition key field', placeholder:'id', dflt:'id'},
+  ],
+  prometheus: [
+    {key:'ssl', label:'Use SSL', type:'checkbox', dflt:true},
+    {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:true},
+    {key:'write_path', label:'Remote write path', placeholder:'/api/v1/write', dflt:'/api/v1/write'},
+  ],
+  victoriametrics: [
+    {key:'api_mode', label:'API mode', type:'select', options:['import','write'], dflt:'import'},
+    {key:'ssl', label:'Use SSL', type:'checkbox', dflt:false},
+    {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:false},
+  ],
+  cribl: [
+    {key:'ssl', label:'Use SSL', type:'checkbox', dflt:true},
+    {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:true},
+  ],
+  grafana_loki: [
+    {key:'ssl', label:'Use SSL', type:'checkbox', dflt:false},
+    {key:'verify_ssl', label:'Verify SSL certificate', type:'checkbox', dflt:false},
+  ],
+  clickhouse: [
+    {key:'database', label:'Database', placeholder:'default', dflt:'default'},
+    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
+    {key:'ssl', label:'Use SSL', type:'checkbox', dflt:false},
+  ],
+  redis: [
+    {key:'db', label:'Database number', type:'number', placeholder:'0', dflt:'0'},
+    {key:'key_prefix', label:'Key prefix', placeholder:'genforge:', dflt:'genforge:'},
+    {key:'data_type', label:'Data type', type:'select', options:['hash','string','list'], dflt:'hash'},
+  ],
+  trino: [
+    {key:'catalog', label:'Catalog', placeholder:'hive', dflt:'hive'},
+    {key:'schema', label:'Schema', placeholder:'default', dflt:'default'},
+    {key:'table', label:'Table name', placeholder:'test_data', dflt:'test_data'},
+  ],
+};
+
+function _mcRenderField(f) {
+  if(f.type === 'checkbox') {
+    return `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:var(--tx-1);margin:6px 0"><input type="checkbox" style="width:auto" data-opt-key="${f.key}" ${f.dflt?'checked':''}> ${f.label}</label>`;
+  }
+  if(f.type === 'select') {
+    return `<div class="form-group"><label>${f.label}</label><select data-opt-key="${f.key}">${f.options.map(o=>`<option value="${o}" ${o===f.dflt?'selected':''}>${o}</option>`).join('')}</select></div>`;
+  }
+  if(f.type === 'number') {
+    return `<div class="form-group"><label>${f.label}</label><input type="number" data-opt-key="${f.key}" placeholder="${f.placeholder||''}" value="${f.dflt||''}"></div>`;
+  }
+  return `<div class="form-group"><label>${f.label}</label><input type="text" data-opt-key="${f.key}" placeholder="${f.placeholder||''}" value="${f.dflt||''}"></div>`;
+}
+
+function _mcUpdateAuthFields(){
+  const method = $('#mc-auth').value;
+  const container = document.getElementById('mc-creds');
+  if(!container) return;
+  const fields = _AUTH_FIELDS[method] || _AUTH_FIELDS.basic;
+  container.innerHTML = fields.map(f =>
+    `<div class="form-group"><label>${f.label}</label><input id="${f.id}" type="${f.type}" placeholder="${f.placeholder}" data-cred-key="${f.key}"></div>`
+  ).join('');
+}
+
+function _mcUpdateConnectorFields(){
+  const type = $('#mc-type').value;
+  const container = document.getElementById('mc-conn-opts');
+  if(!container) return;
+  const fields = _CONNECTOR_OPTIONS[type] || [];
+  if(!fields.length) { container.innerHTML = ''; return; }
+  container.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--tx-2);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px">Connector settings</div>' + fields.map(_mcRenderField).join('');
+}
+
 function openConnectionModal(){
   const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
   const modal = h('div',{class:'modal',html:`
@@ -1548,21 +1682,18 @@ function openConnectionModal(){
     <div class="form-group"><label>Name</label><input id="mc-name" placeholder="e.g. SNOW Dev Instance"></div>
     <div class="form-row">
       <div class="form-group"><label>Connector type</label>
-        <select id="mc-type">${DEMO_CONNECTORS.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
+        <select id="mc-type" onchange="_mcUpdateConnectorFields()">${DEMO_CONNECTORS.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Host</label><input id="mc-host" placeholder="dev12345.service-now.com"></div>
       <div class="form-group"><label>Port (optional)</label><input id="mc-port" type="number" placeholder=""></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Auth method</label>
-        <select id="mc-auth"><option value="basic">Basic auth</option><option value="api_key">API key</option><option value="oauth2">OAuth 2.0</option><option value="bearer_token">Bearer token</option><option value="aws_iam">AWS IAM</option></select>
-      </div>
-      <div class="form-group"><label>Username / Access key</label><input id="mc-user" placeholder=""></div>
+    <div class="form-group"><label>Auth method</label>
+      <select id="mc-auth" onchange="_mcUpdateAuthFields()"><option value="basic">Basic auth</option><option value="api_key">API key</option><option value="oauth2">OAuth 2.0</option><option value="bearer_token">Bearer token</option><option value="aws_iam">AWS IAM</option></select>
     </div>
-    <div class="form-group"><label>Password / Secret / Token</label><input id="mc-pass" type="password" placeholder=""></div>
-    <div class="form-group"><label>Options (JSON)</label><textarea id="mc-opts" rows="3" placeholder='{"table":"incident"}'>{}</textarea></div>
+    <div id="mc-creds" style="display:flex;flex-direction:column;gap:0"></div>
+    <div id="mc-conn-opts"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
       <button class="btn btn-primary" onclick="saveConnection()">Create</button>
@@ -1570,16 +1701,27 @@ function openConnectionModal(){
   `});
   overlay.appendChild(modal);
   $('#modal-root').appendChild(overlay);
+  _mcUpdateAuthFields();
+  _mcUpdateConnectorFields();
 }
 
 function saveConnection(){
-  let opts;
-  try { opts=JSON.parse($('#mc-opts').value); } catch(e){ opts={}; }
+  const opts = {};
+  document.querySelectorAll('#mc-conn-opts [data-opt-key]').forEach(el => {
+    const key = el.dataset.optKey;
+    if(el.type === 'checkbox') { opts[key] = el.checked; }
+    else if(el.type === 'number' && el.value) { opts[key] = parseInt(el.value); }
+    else if(el.value && el.value !== '') { opts[key] = el.value; }
+  });
+  const creds = {};
+  document.querySelectorAll('#mc-creds input[data-cred-key]').forEach(el => {
+    if(el.value) creds[el.dataset.credKey] = el.value;
+  });
   const entry = {
     id:'c'+Date.now(), name:$('#mc-name').value, connector_type:$('#mc-type').value,
     host:$('#mc-host').value, port:$('#mc-port').value?parseInt($('#mc-port').value):null,
     auth_method:$('#mc-auth').value,
-    credentials:{username:$('#mc-user').value,password:$('#mc-pass').value},
+    credentials:creds,
     options:opts, status:'healthy', created_at:new Date().toISOString()
   };
   state.connections.push(entry);
