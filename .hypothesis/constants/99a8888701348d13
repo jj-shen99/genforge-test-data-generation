@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/servicenow.py
+# hypothesis_version: 6.141.1
+
+[200, 201, 401, 403, 1000, 3600, '-', '/', ':', 'Accept', 'Authorization', 'Content-Type', 'GenForge', 'ServiceNow', 'Test', '_', 'access_token', 'additional_info', 'api_mode', 'application/json', 'batch_size', 'boolean', 'category', 'client_credentials', 'client_id', 'client_secret', 'cmdb_ci', 'date-time', 'decimal', 'description', 'element', 'event', 'expires_in', 'float', 'format', 'glide_date_time', 'grant_type', 'http', 'import_set', 'import_table', 'incident', 'integer', 'internal_type', 'journal', 'journal_input', 'metric_name', 'node', 'number', 'object', 'priority', 'properties', 'records', 'reference', 'resource', 'result', 'servicenow', 'severity', 'short_description', 'source', 'string', 'sys_', 'sys_class_name', 'sys_id', 'sysparm_fields', 'sysparm_limit', 'sysparm_query', 'table', 'token_url', 'type', 'uuid']

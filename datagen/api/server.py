@@ -280,6 +280,82 @@ async def test_connection_endpoint(conn_id: str):
         return ConnectionTestResult(healthy=False, message=str(e))
 
 
+def _enrich_extracted_schema(schema: dict) -> dict:
+    """Add x-datagen-faker hints and enums to generic string fields based on field name patterns.
+
+    Uses the same FAKER_PROVIDERS keys defined in datagen.engine.generators
+    (e.g. "person.name", "internet.email", "address.city").
+    """
+    import re
+
+    # Map field name patterns → schema enrichment dicts
+    # Uses x-datagen-faker with dotted provider keys matching FAKER_PROVIDERS
+    _FIELD_HINTS: list[tuple[re.Pattern, dict]] = [
+        # --- Enums first (exact field names that could collide with faker) ---
+        # Priority / Severity / Impact / Urgency
+        (re.compile(r"(^|_)(priority)($|_)", re.I), {"enum": ["1 - Critical", "2 - High", "3 - Moderate", "4 - Low", "5 - Planning"]}),
+        (re.compile(r"(^|_)(severity)($|_)", re.I), {"enum": ["1 - High", "2 - Medium", "3 - Low"]}),
+        (re.compile(r"(^|_)(impact)($|_)", re.I), {"enum": ["1 - High", "2 - Medium", "3 - Low"]}),
+        (re.compile(r"(^|_)(urgency)($|_)", re.I), {"enum": ["1 - High", "2 - Medium", "3 - Low"]}),
+        # State / Status (must come before address.state)
+        (re.compile(r"(^|_)(state|status)($|_)", re.I), {"enum": ["New", "In Progress", "On Hold", "Resolved", "Closed"]}),
+        # Category / Type
+        (re.compile(r"(^|_)(category|type|incident.?type)($|_)", re.I), {"enum": ["Hardware", "Software", "Network", "Database", "Security", "Other"]}),
+        (re.compile(r"(^|_)(subcategory|sub.?category)($|_)", re.I), {"enum": ["Application", "Service", "Infrastructure", "Access", "Configuration"]}),
+        # Boolean-like strings
+        (re.compile(r"(^|_)(active|enabled|is.?active|is.?enabled)($|_)", re.I), {"enum": ["true", "false"]}),
+
+        # --- Names ---
+        (re.compile(r"(^|_)(first.?name|fname)($|_)", re.I), {"x-datagen-faker": "person.first_name"}),
+        (re.compile(r"(^|_)(last.?name|lname|surname)($|_)", re.I), {"x-datagen-faker": "person.last_name"}),
+        (re.compile(r"(^|_)(full.?name|display.?name|caller|assigned.?to|opened.?by|closed.?by|resolved.?by|requested.?by|user.?name|contact.?name|name)($|_)", re.I), {"x-datagen-faker": "person.name"}),
+        # Email
+        (re.compile(r"(^|_)(e.?mail|email.?address)($|_)", re.I), {"format": "email"}),
+        # Phone
+        (re.compile(r"(^|_)(phone|telephone|mobile|cell|fax)($|_)", re.I), {"x-datagen-faker": "phone.number"}),
+        # Internet (IP before address to avoid ip_address matching address.full)
+        (re.compile(r"(^|_)(ip|ip[_.]?address|source[_.]?ip|dest[_.]?ip|client[_.]?ip|remote[_.]?ip)($|_)", re.I), {"format": "ipv4"}),
+        (re.compile(r"(^|_)(url|website|homepage|link|uri)($|_)", re.I), {"format": "uri"}),
+        # Address
+        (re.compile(r"(^|_)(address|street|street.?address)($|_)", re.I), {"x-datagen-faker": "address.full"}),
+        (re.compile(r"(^|_)(city|town)($|_)", re.I), {"x-datagen-faker": "address.city"}),
+        (re.compile(r"(^|_)(province|region)($|_)", re.I), {"x-datagen-faker": "address.state"}),
+        (re.compile(r"(^|_)(zip|zip.?code|postal.?code|postcode)($|_)", re.I), {"x-datagen-faker": "address.zipcode"}),
+        (re.compile(r"(^|_)(country)($|_)", re.I), {"x-datagen-faker": "address.country"}),
+        # Company / Org
+        (re.compile(r"(^|_)(company|organization|org|department|dept|business.?unit)($|_)", re.I), {"x-datagen-faker": "company.name"}),
+        (re.compile(r"(^|_)(job.?title|title|role|position)($|_)", re.I), {"x-datagen-faker": "job.title"}),
+        (re.compile(r"(^|_)(user.?agent|ua)($|_)", re.I), {"x-datagen-faker": "internet.user_agent"}),
+        (re.compile(r"(^|_)(mac|mac.?address)($|_)", re.I), {"x-datagen-faker": "internet.mac_address"}),
+        (re.compile(r"(^|_)(domain|hostname)($|_)", re.I), {"x-datagen-faker": "internet.domain"}),
+        # IDs
+        (re.compile(r"(^|_)(uuid|guid|correlation.?id|request.?id|trace.?id|transaction.?id)($|_)", re.I), {"format": "uuid"}),
+        # Text / Description
+        (re.compile(r"(^|_)(description|summary|comment|comments|notes|body|message|detail|details|short.?description|close.?notes|work.?notes|additional.?comments)($|_)", re.I), {"x-datagen-faker": "lorem.sentence"}),
+        # Location
+        (re.compile(r"(^|_)(location|site|facility)($|_)", re.I), {"x-datagen-faker": "address.city"}),
+        # Number-as-string (ticket numbers)
+        (re.compile(r"(^|_)(number|ticket.?number|incident.?number|case.?number)($|_)", re.I), {"pattern": "INC[0-9]{7}"}),
+    ]
+
+    props = schema.get("properties", {})
+    for field_name, prop in props.items():
+        # Only enrich plain string fields without existing hints
+        if prop.get("type") != "string":
+            continue
+        if any(k in prop for k in ("enum", "x-datagen-faker", "pattern")):
+            continue
+        if prop.get("format") in ("date-time", "date", "uuid", "ipv4", "ipv6", "email", "uri"):
+            continue
+
+        for pat, hints in _FIELD_HINTS:
+            if pat.search(field_name):
+                prop.update(hints)
+                break
+
+    return schema
+
+
 @app.post("/api/connections/{conn_id}/extract-schema")
 async def extract_schema_endpoint(conn_id: str, body: dict):
     """Extract schema from a live application instance via an existing connection."""
@@ -321,7 +397,17 @@ async def extract_schema_endpoint(conn_id: str, body: dict):
         )
         connector = create_connector(config)
         connector.authenticate()
-        schema = connector.get_target_schema()
+
+        # Call get_target_schema — surface errors instead of swallowing them
+        try:
+            schema = connector.get_target_schema()
+        except Exception as extraction_err:
+            connector.close()
+            raise HTTPException(
+                500,
+                f"Schema extraction error for '{target}' ({ctype}): {extraction_err}",
+            )
+
         connector.close()
 
         if not schema:
@@ -330,6 +416,9 @@ async def extract_schema_endpoint(conn_id: str, body: dict):
                 f"Could not extract schema from '{target}'. "
                 f"The target may be empty or the connector ({ctype}) does not support schema extraction.",
             )
+
+        # Enrich generic string fields with faker/enum hints
+        schema = _enrich_extracted_schema(schema)
 
         field_count = len(schema.get("properties", {}))
         return {

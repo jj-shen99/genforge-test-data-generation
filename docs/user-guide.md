@@ -127,13 +127,27 @@ Browse, create, and inspect JSON schemas.
 5. Review the extracted schema preview, adjust the **name** and **category** if needed
 6. Click **Save schema** to add it to your workspace
 
-The extracted schema maps native data types to JSON Schema types (e.g., PostgreSQL `timestamp with time zone` → `{"type":"string","format":"date-time"}`). You can further enrich the extracted schema with `x-datagen-*` extensions to improve data generation quality.
+The extracted schema maps native data types to JSON Schema types (e.g., PostgreSQL `timestamp with time zone` → `{"type":"string","format":"date-time"}`). **Automatic enrichment:** extracted schemas are post-processed to add intelligent data generation hints based on field names:
+
+- **Faker providers** — `name` → `person.name`, `email` → `format: email`, `phone` → `phone.number`, `city` → `address.city`, `company` → `company.name`, `description` → `lorem.sentence`, etc.
+- **Enums** — `priority` → `["1 - Critical", "2 - High", ...]`, `state` → `["New", "In Progress", ...]`, `category`, `severity`, `impact`, `urgency`, `active` (true/false)
+- **Patterns** — `number` → `INC[0-9]{7}` (ticket number format)
+- **Formats** — `ip_address` → `ipv4`, `url` → `uri`, `uuid` → `uuid`
+
+Fields that already have `x-datagen-faker`, `enum`, `pattern`, or recognized `format` values are left untouched. You can further refine the extracted schema with `x-datagen-*` extensions.
+
+**Deleting a schema (admin only):**
+1. Click any schema card to open the detail modal
+2. Click **Delete** (red button, bottom-left) — only visible to admin users
+3. Confirm the deletion in the dialog
 
 **Inspecting a schema:**
 - Click any schema card to view its full JSON definition
 - Field names are displayed as chips on each card
 - Click **Use in generator** to jump to the Generate page
 - Use **category filter tabs** to filter schemas by category
+
+> **Note:** All dropdown lists throughout the dashboard (connections, schemas, connector types, auth methods, categories, targets) are sorted alphabetically for easy navigation.
 
 ### Connections
 
@@ -536,3 +550,39 @@ pip install -e ".[all]"
 | ServiceNow 403 Business Rule error | Use valid initial states only (e.g., state `-5` for Change Requests) |
 | ServiceNow 403 Data Policy error | Include mandatory fields like `close_code` and `close_notes` for resolved/closed states |
 | Login fails with 401 | Verify username and password; default: `admin`/`admin123` or `user`/`user123` |
+
+---
+
+## Testing
+
+GenForge includes a comprehensive test suite with 273+ tests across 9 test files:
+
+```bash
+# Run all tests
+python -m pytest tests/ -v
+
+# Run specific test categories
+python -m pytest tests/test_engine.py -v          # Engine & pipeline
+python -m pytest tests/test_connectors.py -v       # Connectors & auth
+python -m pytest tests/test_models.py -v           # Pydantic models
+python -m pytest tests/test_edge_cases.py -v       # Edge cases & boundaries
+python -m pytest tests/test_property_based.py -v   # Hypothesis property-based
+python -m pytest tests/test_negative.py -v         # Negative / invalid inputs
+python -m pytest tests/test_mutation.py -v         # Mutation tests
+python -m pytest tests/test_enrichment.py -v       # Schema enrichment
+python -m pytest tests/test_property_extended.py -v # Extended property-based
+```
+
+### Test categories
+
+| File | Category | Description |
+|------|----------|-------------|
+| `test_engine.py` | Unit | Generators, schema parser, time-series, pipeline |
+| `test_connectors.py` | Unit | Connector base class, registry, auth provider, metadata |
+| `test_models.py` | Unit | Pydantic request/response model validation |
+| `test_edge_cases.py` | Boundary | Empty schemas, zero counts, large batches, deep nesting |
+| `test_property_based.py` | Property | Hypothesis-based invariants for generators & parser |
+| `test_negative.py` | Negative | Invalid inputs, malformed schemas, error paths |
+| `test_mutation.py` | Mutation | Schema changes produce different outputs |
+| `test_enrichment.py` | Integration | Schema enrichment function correctness |
+| `test_property_extended.py` | Property | Enrichment invariants, pipeline integrity, timeseries |

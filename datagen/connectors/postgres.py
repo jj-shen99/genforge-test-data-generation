@@ -108,6 +108,8 @@ class PostgreSQLConnector(BaseConnector):
     def get_target_schema(self) -> dict | None:
         """Auto-detect schema from PostgreSQL table metadata."""
         try:
+            if self._conn is None:
+                self.authenticate()
             with self._conn.cursor() as cur:
                 cur.execute("""
                     SELECT column_name, data_type, is_nullable, column_default

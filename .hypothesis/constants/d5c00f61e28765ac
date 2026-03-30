@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/clickhouse.py
+# hypothesis_version: 6.141.1
+
+[200, 1000, 8123, '(', '/', 'Array', 'Bool', 'Boolean', 'ClickHouse', 'ClickHouse reachable', 'Content-Type', 'Date', 'Date32', 'DateTime', 'DateTime64', 'Decimal', 'FixedString', 'Float32', 'Float64', 'IPv4', 'IPv6', 'Int16', 'Int32', 'Int64', 'Int8', 'Map', 'Nullable(', 'String', 'Tuple', 'UInt16', 'UInt32', 'UInt64', 'UInt8', 'UUID', 'application/json', 'array', 'boolean', 'clickhouse', 'database', 'date', 'date-time', 'default', 'events', 'format', 'http', 'http://', 'https', 'https://', 'integer', 'ipv4', 'ipv6', 'name', 'number', 'object', 'properties', 'query', 'ssl', 'string', 'table', 'type', 'uuid', 'verify_ssl']

@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/mongodb.py
+# hypothesis_version: 6.141.1
+
+[1000, 27017, 'MongoDB', '_', '_id', 'admin', 'array', 'authSource', 'auth_source', 'boolean', 'collection', 'database', 'host', 'integer', 'mongodb', 'number', 'object', 'password', 'ping', 'port', 'properties', 'string', 'test', 'test_data', 'type', 'uri', 'username']

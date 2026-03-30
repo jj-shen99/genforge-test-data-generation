@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/db/database.py
+# hypothesis_version: 6.141.1
+
+[100, 500, ', ', 'Administrator', 'Regular User', 'active_jobs', 'admin', 'admin123', 'admin@genforge.local', 'auth_method', 'autocommit', 'batch_size', 'c', 'category', 'completed_at', 'completed_jobs', 'connection_id', 'connector_type', 'count', 'created_at', 'credentials', 'custom', 'description', 'display_name', 'duration_seconds', 'email', 'errors', 'failed_jobs', 'host', 'id', 'last_health_check', 'name', 'options', 'pending', 'port', 'progress_pct', 'records_failed', 'records_generated', 'records_sent', 'role', 'row_factory', 'schema', 'schema_def', 'schema_id', 'started_at', 'status', 'tags', 'total_connections', 'total_jobs', 'total_schemas', 'untested', 'updated_at', 'user', 'user123', 'user@genforge.local', 'username']

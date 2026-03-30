@@ -235,7 +235,25 @@ class ServiceNowConnector(BaseConnector):
         )
 
     def get_target_schema(self) -> dict | None:
-        """Auto-detect schema from ServiceNow table metadata."""
+        """Auto-detect schema from ServiceNow table metadata.
+
+        Strategy:
+        1. Try sys_dictionary (requires table-read access to sys_dictionary).
+        2. Fall back to sampling a record from the table and inferring types.
+        """
+        if self._http_client is None:
+            self.authenticate()
+
+        # --- Strategy 1: sys_dictionary metadata ---
+        schema = self._schema_from_dictionary()
+        if schema:
+            return schema
+
+        # --- Strategy 2: sample one record and infer ---
+        return self._schema_from_sample()
+
+    def _schema_from_dictionary(self) -> dict | None:
+        """Extract schema via sys_dictionary table."""
         try:
             resp = self._http_client.get(
                 f"{self._instance}/api/now/table/sys_dictionary",
@@ -249,6 +267,9 @@ class ServiceNowConnector(BaseConnector):
                 return None
 
             result = resp.json().get("result", [])
+            if not result:
+                return None
+
             snow_to_json = {
                 "string": "string", "integer": "integer", "boolean": "boolean",
                 "decimal": "number", "float": "number", "glide_date_time": "string",
@@ -271,7 +292,44 @@ class ServiceNowConnector(BaseConnector):
                 properties[name] = prop
 
             return {"type": "object", "properties": properties} if properties else None
+        except Exception:
+            return None
 
+    def _schema_from_sample(self) -> dict | None:
+        """Infer schema by fetching a sample record from the table."""
+        try:
+            resp = self._http_client.get(
+                f"{self._instance}/api/now/table/{self._table}",
+                params={"sysparm_limit": 1},
+            )
+            if resp.status_code != 200:
+                return None
+
+            records = resp.json().get("result", [])
+            if not records:
+                return None
+
+            sample = records[0]
+            properties = {}
+            for key, value in sample.items():
+                if key.startswith("sys_"):
+                    continue
+                if isinstance(value, bool):
+                    properties[key] = {"type": "boolean"}
+                elif isinstance(value, int):
+                    properties[key] = {"type": "integer"}
+                elif isinstance(value, float):
+                    properties[key] = {"type": "number"}
+                elif isinstance(value, str):
+                    prop: dict[str, Any] = {"type": "string"}
+                    # Detect date-time patterns
+                    if value and len(value) == 19 and ":" in value and "-" in value:
+                        prop["format"] = "date-time"
+                    properties[key] = prop
+                else:
+                    properties[key] = {"type": "string"}
+
+            return {"type": "object", "properties": properties} if properties else None
         except Exception:
             return None
 

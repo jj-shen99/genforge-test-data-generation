@@ -980,6 +980,7 @@ function _populateTargetTables(){
   if(hint) hint.textContent = '';
   if(!connId) return;
   const targets = _getTargetsForConnection(connId);
+  targets.sort((a,b) => a.label.localeCompare(b.label));
   targets.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t.table;
@@ -1104,7 +1105,7 @@ function renderGenerate(){
         <label>Target connection</label>
         <select id="gen-connection" onchange="_populateTargetTables()">
           <option value="">Select a connection...</option>
-          ${state.connections.map(c=>`<option value="${c.id}">${c.name} (${c.connector_type})</option>`).join('')}
+          ${[...state.connections].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}">${c.name} (${c.connector_type})</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
@@ -1122,7 +1123,7 @@ function renderGenerate(){
   </div>
 
   <!-- Hidden select to preserve gen-schema ID for runPreview/runGenerate -->
-  <select id="gen-schema" style="display:none">${state.schemas.map(s=>`<option value="${s.id}"${_genSelectedSchema===s.id?' selected':''}>${s.name}</option>`).join('')}</select>
+  <select id="gen-schema" style="display:none">${[...state.schemas].sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<option value="${s.id}"${_genSelectedSchema===s.id?' selected':''}>${s.name}</option>`).join('')}</select>
 
   <div id="gen-output" style="margin-top:16px"></div>`;
 }
@@ -1648,7 +1649,7 @@ function openSchemaModal(){
     <div class="form-group"><label>Description</label><input id="m-desc" placeholder="Test data for..."></div>
     <div class="form-row">
       <div class="form-group"><label>Category</label>
-        <select id="m-cat"><option>servicenow</option><option>observability</option><option>database</option><option>cloud</option><option>bigdata</option><option>cicd</option><option>infra</option><option>custom</option></select>
+        <select id="m-cat">${['bigdata','cicd','cloud','custom','database','imported','infra','observability','servicenow'].map(c=>`<option>${c}</option>`).join('')}</select>
       </div>
       <div class="form-group"><label>Tags (comma-separated)</label><input id="m-tags" placeholder="itsm, incident"></div>
     </div>
@@ -1685,10 +1686,11 @@ const _EXTRACT_CONNECTORS = {
   trino: {label:'Table name', placeholder:'e.g. events, analytics'},
 };
 
+let _exPendingRefresh = false;
+
 function openExtractSchemaModal(){
-  // Only show connections whose connector type supports extraction
+  _exPendingRefresh = false;
   const eligible = state.connections.filter(c => _EXTRACT_CONNECTORS[c.connector_type]);
-  const extractConnectors = DEMO_CONNECTORS.filter(c => _EXTRACT_CONNECTORS[c.type]).sort((a,b)=>a.name.localeCompare(b.name));
   const categories = ['bigdata','cicd','cloud','custom','database','imported','infra','observability','servicenow'];
   const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
   const modal = h('div',{class:'modal',style:'max-width:580px',html:`
@@ -1698,31 +1700,9 @@ function openExtractSchemaModal(){
       <div style="display:flex;gap:6px;align-items:center">
         <select id="ex-conn" onchange="_exUpdateTarget()" style="flex:1">
           <option value="">— select connection —</option>
-          ${eligible.map(c=>`<option value="${c.id}" data-type="${c.connector_type}">${c.name} (${c.connector_type})</option>`).join('')}
+          ${eligible.sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.id}" data-type="${c.connector_type}">${c.name} (${c.connector_type})</option>`).join('')}
         </select>
-        <button class="btn btn-sm" onclick="_exToggleNewConn()" id="ex-new-conn-btn" title="Create a new connection">+ New</button>
-      </div>
-    </div>
-    <div id="ex-new-conn-panel" style="display:none;border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px;background:var(--bg-2)">
-      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--tx-2);margin-bottom:8px">Quick connection</div>
-      <div class="form-group"><label>Connection name</label><input id="ex-nc-name" placeholder="e.g. My SNOW Dev"></div>
-      <div class="form-row">
-        <div class="form-group"><label>Connector type</label>
-          <select id="ex-nc-type" onchange="_exNcUpdateFields()">${extractConnectors.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Host</label><input id="ex-nc-host" placeholder="dev12345.service-now.com"></div>
-        <div class="form-group"><label>Port</label><input id="ex-nc-port" type="number" placeholder=""></div>
-      </div>
-      <div class="form-group"><label>Auth method</label>
-        <select id="ex-nc-auth" onchange="_exNcUpdateAuthFields()"><option value="basic">Basic auth</option><option value="api_key">API key</option><option value="oauth2">OAuth 2.0</option><option value="bearer_token">Bearer token</option><option value="aws_iam">AWS IAM</option></select>
-      </div>
-      <div id="ex-nc-creds" style="display:flex;flex-direction:column;gap:0"></div>
-      <div id="ex-nc-conn-opts"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-sm" onclick="_exToggleNewConn()">Cancel</button>
-        <button class="btn btn-sm btn-primary" onclick="_exSaveInlineConnection()">Add connection</button>
+        <button class="btn btn-sm" onclick="_exOpenNewConnection()" title="Create a new connection">+ New</button>
       </div>
     </div>
     <div class="form-group"><label id="ex-target-label">Target</label>
@@ -1748,81 +1728,26 @@ function openExtractSchemaModal(){
   $('#modal-root').appendChild(overlay);
 }
 
-function _exToggleNewConn(){
-  const panel = document.getElementById('ex-new-conn-panel');
-  if(!panel) return;
-  const show = panel.style.display === 'none';
-  panel.style.display = show ? 'block' : 'none';
-  if(show){
-    _exNcUpdateAuthFields();
-    _exNcUpdateFields();
-  }
+function _exOpenNewConnection(){
+  _exPendingRefresh = true;
+  openConnectionModal();
 }
 
-function _exNcUpdateAuthFields(){
-  const method = document.getElementById('ex-nc-auth')?.value || 'basic';
-  const container = document.getElementById('ex-nc-creds');
-  if(!container) return;
-  const fields = _AUTH_FIELDS[method] || _AUTH_FIELDS.basic;
-  container.innerHTML = fields.map(f =>
-    `<div class="form-group"><label>${f.label}</label><input id="ex-nc-${f.key}" type="${f.type}" placeholder="${f.placeholder}" data-cred-key="${f.key}"></div>`
-  ).join('');
-}
-
-function _exNcUpdateFields(){
-  const type = document.getElementById('ex-nc-type')?.value || '';
-  const container = document.getElementById('ex-nc-conn-opts');
-  if(!container) return;
-  const fields = _CONNECTOR_OPTIONS[type] || _CONNECTOR_OPTIONS[type.replace('postgresql','postgres')] || [];
-  if(!fields.length){ container.innerHTML = ''; return; }
-  container.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--tx-2);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px">Connector settings</div>' + fields.map(_mcRenderField).join('');
-}
-
-function _exSaveInlineConnection(){
-  const name = document.getElementById('ex-nc-name')?.value?.trim();
-  const ctype = document.getElementById('ex-nc-type')?.value;
-  const host = document.getElementById('ex-nc-host')?.value?.trim();
-  const portVal = document.getElementById('ex-nc-port')?.value;
-  const authMethod = document.getElementById('ex-nc-auth')?.value || 'basic';
-
-  if(!name){ alert('Enter a connection name'); return; }
-  if(!host){ alert('Enter a host'); return; }
-
-  const creds = {};
-  document.querySelectorAll('#ex-nc-creds input[data-cred-key]').forEach(el => {
-    if(el.value) creds[el.dataset.credKey] = el.value;
-  });
-
-  const opts = {};
-  document.querySelectorAll('#ex-nc-conn-opts [data-opt-key]').forEach(el => {
-    const key = el.dataset.optKey;
-    if(el.type === 'checkbox') { opts[key] = el.checked; }
-    else if(el.type === 'number' && el.value) { opts[key] = parseInt(el.value); }
-    else if(el.value && el.value !== '') { opts[key] = el.value; }
-  });
-
-  const entry = {
-    id:'c'+Date.now(), name, connector_type:ctype,
-    host, port: portVal ? parseInt(portVal) : null,
-    auth_method: authMethod,
-    credentials: creds,
-    options: opts, status:'unknown', created_at:new Date().toISOString()
-  };
-  state.connections.push(entry);
-
-  // Hide the panel and refresh the connection dropdown
-  document.getElementById('ex-new-conn-panel').style.display = 'none';
+function _exRefreshDropdown(){
   const sel = document.getElementById('ex-conn');
-  if(_EXTRACT_CONNECTORS[ctype]){
-    const opt = document.createElement('option');
-    opt.value = entry.id;
-    opt.dataset.type = ctype;
-    opt.textContent = `${name} (${ctype})`;
-    sel.appendChild(opt);
-    sel.value = entry.id;
+  if(!sel) return;
+  const eligible = state.connections.filter(c => _EXTRACT_CONNECTORS[c.connector_type]);
+  const curVal = sel.value;
+  sel.innerHTML = '<option value="">— select connection —</option>' +
+    eligible.map(c=>`<option value="${c.id}" data-type="${c.connector_type}">${c.name} (${c.connector_type})</option>`).join('');
+  // Auto-select the newest connection if it's eligible
+  const newest = state.connections[state.connections.length - 1];
+  if(newest && _EXTRACT_CONNECTORS[newest.connector_type]){
+    sel.value = newest.id;
     _exUpdateTarget();
+  } else {
+    sel.value = curVal;
   }
-  document.getElementById('ex-status').innerHTML = `<span style="color:var(--green-tx)">Connection "${name}" added</span>`;
 }
 
 function _exUpdateTarget(){
@@ -1867,10 +1792,29 @@ async function extractSchemaFromApp(){
   // Extract
   btn.disabled = true;
   btn.textContent = 'Extracting...';
-  statusEl.innerHTML = '<span style="color:var(--tx-2)">Connecting and discovering schema...</span>';
+  statusEl.innerHTML = '<span style="color:var(--tx-2)">Registering connection and discovering schema...</span>';
 
   try {
-    const resp = await fetch(`${API}/connections/${connId}/extract-schema`, {
+    // Register connection on backend first (same pattern as testConnection)
+    const conn = state.connections.find(c=>c.id===connId);
+    if(!conn){ statusEl.innerHTML = '<span style="color:var(--red-tx)">Connection data not found</span>'; btn.disabled=false; btn.textContent='Extract'; return; }
+    const regResp = await fetch(`${API}/connections`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:conn.name, connector_type:conn.connector_type,
+        host:conn.host, port:conn.port||null,
+        auth_method:conn.auth_method,
+        credentials:conn.credentials||{username:'',password:''},
+        options:conn.options||{}
+      })
+    });
+    if(!regResp.ok) throw new Error(`Backend registration failed: ${regResp.status}`);
+    const regData = await regResp.json();
+    const backendId = regData.id;
+
+    statusEl.innerHTML = '<span style="color:var(--tx-2)">Connected. Extracting schema...</span>';
+
+    const resp = await fetch(`${API}/connections/${backendId}/extract-schema`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({target}),
@@ -1916,12 +1860,28 @@ function viewSchema(id){
     <div style="margin-bottom:12px">${s.tags.map(t=>`<span class="tag tag-purple">${t}</span>`).join(' ')}</div>
     <div class="code-preview">${JSON.stringify(s.schema,null,2)}</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      ${isAdmin()?'<button class="btn" style="color:var(--red-tx)" id="vs-delete-btn">Delete</button>':''}
+      <div style="flex:1"></div>
       <button class="btn" onclick="this.closest('.modal-overlay').remove()">Close</button>
       <button class="btn btn-primary" onclick="navigate('generate');this.closest('.modal-overlay').remove()">Use in generator</button>
     </div>
   `});
   overlay.appendChild(modal);
   $('#modal-root').appendChild(overlay);
+  const delBtn = document.getElementById('vs-delete-btn');
+  if(delBtn){
+    delBtn.addEventListener('click', () => {
+      if(confirm('Delete schema "' + s.name + '"?')){
+        deleteSchema(s.id);
+        overlay.remove();
+      }
+    });
+  }
+}
+
+function deleteSchema(id){
+  state.schemas = state.schemas.filter(s => s.id !== id);
+  render();
 }
 
 const _AUTH_FIELDS = {
@@ -2039,7 +1999,7 @@ function openConnectionModal(){
     <div class="form-group"><label>Name</label><input id="mc-name" placeholder="e.g. SNOW Dev Instance"></div>
     <div class="form-row">
       <div class="form-group"><label>Connector type</label>
-        <select id="mc-type" onchange="_mcUpdateConnectorFields()">${DEMO_CONNECTORS.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
+        <select id="mc-type" onchange="_mcUpdateConnectorFields()">${[...DEMO_CONNECTORS].sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
       </div>
     </div>
     <div class="form-row">
@@ -2047,7 +2007,7 @@ function openConnectionModal(){
       <div class="form-group"><label>Port (optional)</label><input id="mc-port" type="number" placeholder=""></div>
     </div>
     <div class="form-group"><label>Auth method</label>
-      <select id="mc-auth" onchange="_mcUpdateAuthFields()"><option value="basic">Basic auth</option><option value="api_key">API key</option><option value="oauth2">OAuth 2.0</option><option value="bearer_token">Bearer token</option><option value="aws_iam">AWS IAM</option></select>
+      <select id="mc-auth" onchange="_mcUpdateAuthFields()">${[{v:'api_key',l:'API key'},{v:'aws_iam',l:'AWS IAM'},{v:'basic',l:'Basic auth'},{v:'bearer_token',l:'Bearer token'},{v:'oauth2',l:'OAuth 2.0'}].map(a=>`<option value="${a.v}">${a.l}</option>`).join('')}</select>
     </div>
     <div id="mc-creds" style="display:flex;flex-direction:column;gap:0"></div>
     <div id="mc-conn-opts"></div>
@@ -2082,7 +2042,16 @@ function saveConnection(){
     options:opts, status:'healthy', created_at:new Date().toISOString()
   };
   state.connections.push(entry);
-  $('.modal-overlay').remove();
+  // If Extract Schema modal is waiting, remove only the topmost (connection) overlay
+  if(_exPendingRefresh){
+    const overlays = document.querySelectorAll('.modal-overlay');
+    if(overlays.length > 1) overlays[overlays.length - 1].remove();
+    else $('.modal-overlay').remove();
+    _exPendingRefresh = false;
+    _exRefreshDropdown();
+  } else {
+    $('.modal-overlay').remove();
+  }
   render();
 }
 

@@ -89,7 +89,11 @@ test-data-generation-ai/
 │   ├── test_connectors.py         # Connector registry, base class, auth provider tests
 │   ├── test_models.py             # Pydantic API model tests
 │   ├── test_edge_cases.py         # Edge-case & boundary value tests
-│   └── test_property_based.py     # Hypothesis property-based tests
+│   ├── test_property_based.py     # Hypothesis property-based tests
+│   ├── test_negative.py           # Negative tests — invalid inputs, error paths
+│   ├── test_mutation.py           # Mutation tests — verify schema changes affect output
+│   ├── test_enrichment.py         # Schema enrichment function tests
+│   └── test_property_extended.py  # Extended property-based tests (enrichment, pipeline, timeseries)
 ├── .env.example                   # Database connection string config
 ├── requirements.txt
 ├── setup.py
@@ -253,7 +257,9 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 - **Schema Intelligence** — portfolio quality scoring, per-schema field profiling, type distribution, actionable insights, load external schemas for analysis, downloadable text reports
 - **PostgreSQL persistence** — schemas, connections, jobs, and users survive server restarts
 - **Light / Dark theme** — toggle in sidebar footer, persisted to localStorage
-- **Extract schema from app** — connect to a live application (ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino) and auto-discover its schema; create connections inline from the extraction dialog
+- **Extract schema from app** — connect to a live application (ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino) and auto-discover its schema; create connections inline from the extraction dialog; extracted schemas are auto-enriched with faker providers, enums, and patterns for common field names (e.g., `name` → `person.name`, `priority` → enum, `number` → `INC[0-9]{7}`)
+- **Delete schemas** — admin users can delete schemas from the detail modal
+- **Alphabetically sorted dropdowns** — all dropdown lists (connections, schemas, connector types, auth methods, categories, targets) are sorted alphabetically
 - **Load schema from file** — import JSON Schema files (raw or wrapped format) via file picker
 - **Schema category filters** — filter by all 14 categories with color-coded tags
 - **Dynamic connection forms** — auth fields change per method (Basic, API Key, OAuth2, Bearer, AWS IAM); connection-time settings (SSL, database, compression) auto-populate per connector type

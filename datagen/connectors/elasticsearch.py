@@ -125,6 +125,8 @@ class ElasticsearchConnector(BaseConnector):
 
     def get_target_schema(self) -> dict | None:
         try:
+            if self._client is None:
+                self.authenticate()
             resp = self._client.get(f"/{self._index}/_mapping")
             if resp.status_code != 200:
                 return None

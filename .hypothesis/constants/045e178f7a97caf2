@@ -1,0 +1,4 @@
+# file: /Users/jianjun.shen/test-data-generation-ai/datagen/connectors/trino.py
+# hypothesis_version: 6.141.1
+
+[200, 1000, 8080, '(', ', ', '?', 'SELECT 1', 'Trino', 'array', 'auth', 'bigdata', 'bigint', 'boolean', 'catalog', 'char', 'date', 'date-time', 'decimal', 'default', 'double', 'events', 'format', 'genforge', 'hive', 'host', 'http_scheme', 'https', 'integer', 'ipaddress', 'ipv4', 'json', 'localhost', 'map', 'number', 'object', 'password', 'port', 'properties', 'real', 'row', 'schema', 'smallint', 'string', 'table', 'time', 'timestamp', 'tinyint', 'trino', 'type', 'user', 'username', 'uuid', 'varbinary', 'varchar']
