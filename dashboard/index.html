@@ -835,6 +835,7 @@ function renderSchemas(){
       ${cats.map(c=>`<button class="btn btn-sm${_schemaFilter===c?' btn-primary':''}" onclick="_schemaFilter='${c}';render()">${c==='all'?'All':c}</button>`).join('')}
     </div>
     <div style="display:flex;gap:6px">
+      ${isAdmin()?'<button class="btn" onclick="openExtractSchemaModal()">Extract from app</button>':''}
       ${isAdmin()?'<button class="btn" onclick="loadSchemaFromFile()">Load from file</button>':''}
       ${isAdmin()?'<button class="btn btn-primary" onclick="openSchemaModal()">+ New schema</button>':''}
     </div>
@@ -1672,6 +1673,134 @@ function saveSchema(){
   state.schemas.push(entry);
   $('.modal-overlay').remove();
   render();
+}
+
+// Connectors that support schema extraction and their target label/placeholder
+const _EXTRACT_CONNECTORS = {
+  servicenow: {label:'Table name', placeholder:'e.g. incident, change_request, cmdb_ci'},
+  elasticsearch: {label:'Index name', placeholder:'e.g. logs-2024, my-index'},
+  postgresql: {label:'Table name', placeholder:'e.g. users, orders'},
+  mongodb: {label:'Collection name', placeholder:'e.g. users, events'},
+  clickhouse: {label:'Table name', placeholder:'e.g. events, metrics'},
+  trino: {label:'Table name', placeholder:'e.g. events, analytics'},
+};
+
+function openExtractSchemaModal(){
+  // Only show connections whose connector type supports extraction
+  const eligible = state.connections.filter(c => _EXTRACT_CONNECTORS[c.connector_type]);
+  const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
+  const modal = h('div',{class:'modal',html:`
+    <h3>Extract schema from application</h3>
+    <p style="font-size:13px;color:var(--tx-2);margin-bottom:16px">Connect to a live application and discover its schema automatically. Supported: ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino.</p>
+    ${!eligible.length ? '<div class="ml-insight" style="margin-bottom:12px"><span class="icon">&#9888;&#65039;</span><span>No eligible connections found. Create a connection to a supported application first.</span></div>' : ''}
+    <div class="form-group"><label>Connection</label>
+      <select id="ex-conn" onchange="_exUpdateTarget()">
+        <option value="">— select connection —</option>
+        ${eligible.map(c=>`<option value="${c.id}" data-type="${c.connector_type}">${c.name} (${c.connector_type})</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label id="ex-target-label">Target</label>
+      <input id="ex-target" placeholder="Enter target name">
+    </div>
+    <div class="form-group"><label>Schema name</label>
+      <input id="ex-name" placeholder="Auto-generated from target">
+    </div>
+    <div class="form-group"><label>Category</label>
+      <select id="ex-cat"><option>servicenow</option><option>observability</option><option>database</option><option>cloud</option><option>bigdata</option><option>cicd</option><option>infra</option><option>custom</option><option>imported</option></select>
+    </div>
+    <div id="ex-status" style="min-height:24px;font-size:13px;margin-bottom:8px"></div>
+    <div id="ex-preview" style="display:none;margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:block">Extracted schema preview</label>
+      <div class="code-preview" id="ex-schema-json" style="max-height:200px;overflow:auto;font-size:11px"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-primary" id="ex-btn" onclick="extractSchemaFromApp()">Extract</button>
+    </div>
+  `});
+  overlay.appendChild(modal);
+  $('#modal-root').appendChild(overlay);
+}
+
+function _exUpdateTarget(){
+  const sel = $('#ex-conn');
+  const opt = sel.options[sel.selectedIndex];
+  const ctype = opt?.dataset?.type || '';
+  const info = _EXTRACT_CONNECTORS[ctype];
+  if(info){
+    $('#ex-target-label').textContent = info.label;
+    $('#ex-target').placeholder = info.placeholder;
+    // Auto-set category from connector
+    const catMap = {servicenow:'servicenow',elasticsearch:'observability',postgresql:'database',mongodb:'database',clickhouse:'database',trino:'bigdata'};
+    if(catMap[ctype]) $('#ex-cat').value = catMap[ctype];
+  }
+}
+
+let _exExtractedSchema = null;
+
+async function extractSchemaFromApp(){
+  const connId = $('#ex-conn').value;
+  const target = $('#ex-target').value.trim();
+  const statusEl = $('#ex-status');
+  const btn = $('#ex-btn');
+
+  if(!connId){ statusEl.innerHTML = '<span style="color:var(--red-tx)">Select a connection</span>'; return; }
+  if(!target){ statusEl.innerHTML = '<span style="color:var(--red-tx)">Enter a target name</span>'; return; }
+
+  // If we already extracted and the button says "Save", save the schema
+  if(_exExtractedSchema && btn.textContent.trim() === 'Save schema'){
+    const name = $('#ex-name').value.trim() || (target.replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase()));
+    const cat = $('#ex-cat').value;
+    const conn = state.connections.find(c=>c.id===connId);
+    const desc = `Extracted from ${conn?.connector_type||'application'} target "${target}"`;
+    const entry = {id:'ex_'+Date.now(), name, description:desc, category:cat, tags:['extracted',conn?.connector_type||'app'], schema:_exExtractedSchema, created_at:new Date().toISOString(), updated_at:new Date().toISOString()};
+    state.schemas.push(entry);
+    _exExtractedSchema = null;
+    $('.modal-overlay').remove();
+    render();
+    return;
+  }
+
+  // Extract
+  btn.disabled = true;
+  btn.textContent = 'Extracting...';
+  statusEl.innerHTML = '<span style="color:var(--tx-2)">Connecting and discovering schema...</span>';
+
+  try {
+    const resp = await fetch(`${API}/connections/${connId}/extract-schema`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({target}),
+    });
+    const data = await resp.json();
+    if(!resp.ok){
+      const msg = data.detail || data.message || JSON.stringify(data);
+      statusEl.innerHTML = `<span style="color:var(--red-tx)">Error: ${msg}</span>`;
+      btn.disabled = false;
+      btn.textContent = 'Extract';
+      return;
+    }
+
+    _exExtractedSchema = data.schema;
+    const fieldCount = data.field_count || Object.keys(data.schema.properties||{}).length;
+    statusEl.innerHTML = `<span style="color:var(--green-tx)">Extracted ${fieldCount} fields from "${target}"</span>`;
+    $('#ex-preview').style.display = 'block';
+    $('#ex-schema-json').textContent = JSON.stringify(data.schema, null, 2);
+
+    // Auto-fill name if empty
+    if(!$('#ex-name').value){
+      const conn = state.connections.find(c=>c.id===connId);
+      const prefix = conn ? conn.connector_type.replace(/^\w/,c=>c.toUpperCase()) : '';
+      $('#ex-name').value = `${prefix} ${target.replace(/[_-]/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}`;
+    }
+
+    btn.textContent = 'Save schema';
+    btn.disabled = false;
+  } catch(err) {
+    statusEl.innerHTML = `<span style="color:var(--red-tx)">Network error: ${err.message}</span>`;
+    btn.disabled = false;
+    btn.textContent = 'Extract';
+  }
 }
 
 function viewSchema(id){

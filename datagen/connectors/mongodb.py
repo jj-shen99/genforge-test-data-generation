@@ -78,6 +78,58 @@ class MongoDBConnector(BaseConnector):
             return PushResult(success=False, errors=[str(e)],
                             duration_seconds=round(time.time() - start, 3))
 
+    def get_target_schema(self) -> dict | None:
+        """Auto-detect schema by sampling documents from the MongoDB collection."""
+        try:
+            if self._db is None:
+                self.authenticate()
+            coll = self._db[self._collection]
+            sample = list(coll.find({}, {"_id": 0}).limit(50))
+            if not sample:
+                return None
+
+            # Infer types from sampled documents
+            field_types: dict[str, set] = {}
+            for doc in sample:
+                for key, val in doc.items():
+                    if key.startswith("_"):
+                        continue
+                    field_types.setdefault(key, set())
+                    if isinstance(val, bool):
+                        field_types[key].add("boolean")
+                    elif isinstance(val, int):
+                        field_types[key].add("integer")
+                    elif isinstance(val, float):
+                        field_types[key].add("number")
+                    elif isinstance(val, str):
+                        field_types[key].add("string")
+                    elif isinstance(val, list):
+                        field_types[key].add("array")
+                    elif isinstance(val, dict):
+                        field_types[key].add("object")
+                    elif val is None:
+                        pass  # skip nulls for type inference
+
+            properties = {}
+            for name, types in field_types.items():
+                types.discard("object")  # prefer concrete types
+                if not types:
+                    properties[name] = {"type": "string"}
+                elif len(types) == 1:
+                    properties[name] = {"type": next(iter(types))}
+                else:
+                    # Multiple types seen — pick the most common
+                    if "string" in types:
+                        properties[name] = {"type": "string"}
+                    elif "number" in types:
+                        properties[name] = {"type": "number"}
+                    else:
+                        properties[name] = {"type": next(iter(types))}
+
+            return {"type": "object", "properties": properties} if properties else None
+        except Exception:
+            return None
+
     def close(self):
         if self._client:
             self._client.close()

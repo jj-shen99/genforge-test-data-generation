@@ -98,6 +98,59 @@ class ClickHouseConnector(BaseConnector):
             return PushResult(success=False, errors=[str(e)],
                             duration_seconds=round(time.time() - start, 3))
 
+    def get_target_schema(self) -> dict | None:
+        """Auto-detect schema from ClickHouse table metadata via system.columns."""
+        try:
+            if self._client is None:
+                self.authenticate()
+            query = (
+                f"SELECT name, type FROM system.columns "
+                f"WHERE database = '{self._database}' AND table = '{self._table}' "
+                f"ORDER BY position FORMAT JSONEachRow"
+            )
+            resp = self._client.get(self._base_url, params={"query": query})
+            if resp.status_code != 200 or not resp.text.strip():
+                return None
+
+            ch_to_json = {
+                "String": "string", "FixedString": "string",
+                "UInt8": "integer", "UInt16": "integer", "UInt32": "integer", "UInt64": "integer",
+                "Int8": "integer", "Int16": "integer", "Int32": "integer", "Int64": "integer",
+                "Float32": "number", "Float64": "number", "Decimal": "number",
+                "Bool": "boolean", "Boolean": "boolean",
+                "Date": "string", "Date32": "string", "DateTime": "string", "DateTime64": "string",
+                "UUID": "string", "IPv4": "string", "IPv6": "string",
+                "Array": "array", "Map": "object", "Tuple": "object",
+            }
+
+            properties = {}
+            for line in resp.text.strip().split("\n"):
+                row = json.loads(line)
+                col_name = row.get("name", "")
+                col_type = row.get("type", "String")
+                # Strip Nullable(...) wrapper
+                if col_type.startswith("Nullable("):
+                    col_type = col_type[9:-1]
+                # Match base type (ignore parameters like Decimal(18,2))
+                base_type = col_type.split("(")[0]
+                json_type = ch_to_json.get(base_type, "string")
+                prop: dict = {"type": json_type}
+                if base_type in ("DateTime", "DateTime64"):
+                    prop["format"] = "date-time"
+                elif base_type in ("Date", "Date32"):
+                    prop["format"] = "date"
+                elif base_type == "UUID":
+                    prop["format"] = "uuid"
+                elif base_type == "IPv4":
+                    prop["format"] = "ipv4"
+                elif base_type == "IPv6":
+                    prop["format"] = "ipv6"
+                properties[col_name] = prop
+
+            return {"type": "object", "properties": properties} if properties else None
+        except Exception:
+            return None
+
     def close(self):
         if self._client:
             self._client.close()

@@ -116,6 +116,54 @@ class TrinoConnector(BaseConnector):
             return PushResult(success=False, errors=[str(e)],
                             duration_seconds=round(time.time() - start, 3))
 
+    def get_target_schema(self) -> dict | None:
+        """Auto-detect schema from Trino table metadata via information_schema."""
+        try:
+            if self._conn is None:
+                self.authenticate()
+            cur = self._conn.cursor()
+            cur.execute(
+                "SELECT column_name, data_type "
+                "FROM information_schema.columns "
+                f"WHERE table_catalog = '{self._catalog}' "
+                f"AND table_schema = '{self._schema}' "
+                f"AND table_name = '{self._table}' "
+                "ORDER BY ordinal_position"
+            )
+            rows = cur.fetchall()
+            if not rows:
+                return None
+
+            trino_to_json = {
+                "varchar": "string", "char": "string", "varbinary": "string",
+                "boolean": "boolean",
+                "tinyint": "integer", "smallint": "integer", "integer": "integer", "bigint": "integer",
+                "real": "number", "double": "number", "decimal": "number",
+                "date": "string", "time": "string", "timestamp": "string",
+                "timestamp with time zone": "string",
+                "json": "object", "array": "array", "map": "object", "row": "object",
+                "uuid": "string", "ipaddress": "string",
+            }
+
+            properties = {}
+            for col_name, data_type in rows:
+                base_type = data_type.split("(")[0].lower()
+                json_type = trino_to_json.get(base_type, "string")
+                prop: dict = {"type": json_type}
+                if base_type in ("timestamp", "timestamp with time zone"):
+                    prop["format"] = "date-time"
+                elif base_type == "date":
+                    prop["format"] = "date"
+                elif base_type == "uuid":
+                    prop["format"] = "uuid"
+                elif base_type == "ipaddress":
+                    prop["format"] = "ipv4"
+                properties[col_name] = prop
+
+            return {"type": "object", "properties": properties} if properties else None
+        except Exception:
+            return None
+
     def close(self):
         if self._conn:
             self._conn.close()

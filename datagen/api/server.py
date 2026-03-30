@@ -280,6 +280,70 @@ async def test_connection_endpoint(conn_id: str):
         return ConnectionTestResult(healthy=False, message=str(e))
 
 
+@app.post("/api/connections/{conn_id}/extract-schema")
+async def extract_schema_endpoint(conn_id: str, body: dict):
+    """Extract schema from a live application instance via an existing connection."""
+    conn_data = await db.get_connection_with_creds(conn_id)
+    if not conn_data:
+        raise HTTPException(404, "Connection not found")
+
+    target = body.get("target", "")  # table/index/collection name
+    if not target:
+        raise HTTPException(400, "target is required (table, index, or collection name)")
+
+    try:
+        # Build options with the target override
+        options = dict(conn_data.get("options", {}))
+        ctype = conn_data["connector_type"]
+
+        # Map the generic "target" to the connector-specific option key
+        target_key_map = {
+            "servicenow": "table",
+            "elasticsearch": "index",
+            "mongodb": "collection",
+            "postgresql": "table",
+            "clickhouse": "table",
+            "trino": "table",
+        }
+        opt_key = target_key_map.get(ctype, "table")
+        options[opt_key] = target
+
+        config = ConnectionConfig(
+            name=conn_data["name"],
+            connector_type=ctype,
+            host=conn_data["host"],
+            port=conn_data.get("port"),
+            auth=AuthConfig(
+                method=AuthMethod(conn_data["auth_method"]),
+                credentials=conn_data.get("credentials", {}),
+            ),
+            options=options,
+        )
+        connector = create_connector(config)
+        connector.authenticate()
+        schema = connector.get_target_schema()
+        connector.close()
+
+        if not schema:
+            raise HTTPException(
+                422,
+                f"Could not extract schema from '{target}'. "
+                f"The target may be empty or the connector ({ctype}) does not support schema extraction.",
+            )
+
+        field_count = len(schema.get("properties", {}))
+        return {
+            "schema": schema,
+            "target": target,
+            "connector_type": ctype,
+            "field_count": field_count,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Schema extraction failed: {e}")
+
+
 @app.delete("/api/connections/{conn_id}")
 async def delete_connection_endpoint(conn_id: str):
     deleted = await db.delete_connection(conn_id)
