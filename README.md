@@ -253,7 +253,7 @@ Tables are auto-created on first startup. See `.env.example` for reference.
 - **Schema Intelligence** — portfolio quality scoring, per-schema field profiling, type distribution, actionable insights, load external schemas for analysis, downloadable text reports
 - **PostgreSQL persistence** — schemas, connections, jobs, and users survive server restarts
 - **Light / Dark theme** — toggle in sidebar footer, persisted to localStorage
-- **Extract schema from app** — connect to a live application (ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino) and auto-discover its schema
+- **Extract schema from app** — connect to a live application (ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino) and auto-discover its schema; create connections inline from the extraction dialog
 - **Load schema from file** — import JSON Schema files (raw or wrapped format) via file picker
 - **Schema category filters** — filter by all 14 categories with color-coded tags
 - **Dynamic connection forms** — auth fields change per method (Basic, API Key, OAuth2, Bearer, AWS IAM); connection-time settings (SSL, database, compression) auto-populate per connector type

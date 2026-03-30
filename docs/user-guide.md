@@ -121,8 +121,8 @@ Browse, create, and inspect JSON schemas.
 
 **Extracting schema from a live application:**
 1. Click **Extract from app** in the Schema Studio toolbar
-2. Select an existing **connection** from the dropdown — only connectors that support schema extraction are shown (ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino)
-3. Enter the **target name** (table, index, or collection depending on the connector type)
+2. Select an existing **connection** from the dropdown, or click **+ New** to create one inline — only connectors that support schema extraction are shown (ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino)
+3. Enter the **target name** (table, index, or collection depending on the connector type) — the label updates automatically based on the connector
 4. Click **Extract** — GenForge connects to the live instance and auto-discovers the schema
 5. Review the extracted schema preview, adjust the **name** and **category** if needed
 6. Click **Save schema** to add it to your workspace

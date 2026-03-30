@@ -1688,16 +1688,42 @@ const _EXTRACT_CONNECTORS = {
 function openExtractSchemaModal(){
   // Only show connections whose connector type supports extraction
   const eligible = state.connections.filter(c => _EXTRACT_CONNECTORS[c.connector_type]);
+  const extractConnectors = DEMO_CONNECTORS.filter(c => _EXTRACT_CONNECTORS[c.type]).sort((a,b)=>a.name.localeCompare(b.name));
+  const categories = ['bigdata','cicd','cloud','custom','database','imported','infra','observability','servicenow'];
   const overlay = h('div',{class:'modal-overlay',onclick:e=>{if(e.target===overlay)overlay.remove()}});
-  const modal = h('div',{class:'modal',html:`
+  const modal = h('div',{class:'modal',style:'max-width:580px',html:`
     <h3>Extract schema from application</h3>
     <p style="font-size:13px;color:var(--tx-2);margin-bottom:16px">Connect to a live application and discover its schema automatically. Supported: ServiceNow, Elasticsearch, PostgreSQL, MongoDB, ClickHouse, Trino.</p>
-    ${!eligible.length ? '<div class="ml-insight" style="margin-bottom:12px"><span class="icon">&#9888;&#65039;</span><span>No eligible connections found. Create a connection to a supported application first.</span></div>' : ''}
     <div class="form-group"><label>Connection</label>
-      <select id="ex-conn" onchange="_exUpdateTarget()">
-        <option value="">— select connection —</option>
-        ${eligible.map(c=>`<option value="${c.id}" data-type="${c.connector_type}">${c.name} (${c.connector_type})</option>`).join('')}
-      </select>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="ex-conn" onchange="_exUpdateTarget()" style="flex:1">
+          <option value="">— select connection —</option>
+          ${eligible.map(c=>`<option value="${c.id}" data-type="${c.connector_type}">${c.name} (${c.connector_type})</option>`).join('')}
+        </select>
+        <button class="btn btn-sm" onclick="_exToggleNewConn()" id="ex-new-conn-btn" title="Create a new connection">+ New</button>
+      </div>
+    </div>
+    <div id="ex-new-conn-panel" style="display:none;border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px;background:var(--bg-2)">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--tx-2);margin-bottom:8px">Quick connection</div>
+      <div class="form-group"><label>Connection name</label><input id="ex-nc-name" placeholder="e.g. My SNOW Dev"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Connector type</label>
+          <select id="ex-nc-type" onchange="_exNcUpdateFields()">${extractConnectors.map(c=>`<option value="${c.type}">${c.name}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Host</label><input id="ex-nc-host" placeholder="dev12345.service-now.com"></div>
+        <div class="form-group"><label>Port</label><input id="ex-nc-port" type="number" placeholder=""></div>
+      </div>
+      <div class="form-group"><label>Auth method</label>
+        <select id="ex-nc-auth" onchange="_exNcUpdateAuthFields()"><option value="basic">Basic auth</option><option value="api_key">API key</option><option value="oauth2">OAuth 2.0</option><option value="bearer_token">Bearer token</option><option value="aws_iam">AWS IAM</option></select>
+      </div>
+      <div id="ex-nc-creds" style="display:flex;flex-direction:column;gap:0"></div>
+      <div id="ex-nc-conn-opts"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-sm" onclick="_exToggleNewConn()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="_exSaveInlineConnection()">Add connection</button>
+      </div>
     </div>
     <div class="form-group"><label id="ex-target-label">Target</label>
       <input id="ex-target" placeholder="Enter target name">
@@ -1706,7 +1732,7 @@ function openExtractSchemaModal(){
       <input id="ex-name" placeholder="Auto-generated from target">
     </div>
     <div class="form-group"><label>Category</label>
-      <select id="ex-cat"><option>servicenow</option><option>observability</option><option>database</option><option>cloud</option><option>bigdata</option><option>cicd</option><option>infra</option><option>custom</option><option>imported</option></select>
+      <select id="ex-cat">${categories.map(c=>`<option>${c}</option>`).join('')}</select>
     </div>
     <div id="ex-status" style="min-height:24px;font-size:13px;margin-bottom:8px"></div>
     <div id="ex-preview" style="display:none;margin-bottom:12px">
@@ -1720,6 +1746,83 @@ function openExtractSchemaModal(){
   `});
   overlay.appendChild(modal);
   $('#modal-root').appendChild(overlay);
+}
+
+function _exToggleNewConn(){
+  const panel = document.getElementById('ex-new-conn-panel');
+  if(!panel) return;
+  const show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  if(show){
+    _exNcUpdateAuthFields();
+    _exNcUpdateFields();
+  }
+}
+
+function _exNcUpdateAuthFields(){
+  const method = document.getElementById('ex-nc-auth')?.value || 'basic';
+  const container = document.getElementById('ex-nc-creds');
+  if(!container) return;
+  const fields = _AUTH_FIELDS[method] || _AUTH_FIELDS.basic;
+  container.innerHTML = fields.map(f =>
+    `<div class="form-group"><label>${f.label}</label><input id="ex-nc-${f.key}" type="${f.type}" placeholder="${f.placeholder}" data-cred-key="${f.key}"></div>`
+  ).join('');
+}
+
+function _exNcUpdateFields(){
+  const type = document.getElementById('ex-nc-type')?.value || '';
+  const container = document.getElementById('ex-nc-conn-opts');
+  if(!container) return;
+  const fields = _CONNECTOR_OPTIONS[type] || _CONNECTOR_OPTIONS[type.replace('postgresql','postgres')] || [];
+  if(!fields.length){ container.innerHTML = ''; return; }
+  container.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--tx-2);text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px">Connector settings</div>' + fields.map(_mcRenderField).join('');
+}
+
+function _exSaveInlineConnection(){
+  const name = document.getElementById('ex-nc-name')?.value?.trim();
+  const ctype = document.getElementById('ex-nc-type')?.value;
+  const host = document.getElementById('ex-nc-host')?.value?.trim();
+  const portVal = document.getElementById('ex-nc-port')?.value;
+  const authMethod = document.getElementById('ex-nc-auth')?.value || 'basic';
+
+  if(!name){ alert('Enter a connection name'); return; }
+  if(!host){ alert('Enter a host'); return; }
+
+  const creds = {};
+  document.querySelectorAll('#ex-nc-creds input[data-cred-key]').forEach(el => {
+    if(el.value) creds[el.dataset.credKey] = el.value;
+  });
+
+  const opts = {};
+  document.querySelectorAll('#ex-nc-conn-opts [data-opt-key]').forEach(el => {
+    const key = el.dataset.optKey;
+    if(el.type === 'checkbox') { opts[key] = el.checked; }
+    else if(el.type === 'number' && el.value) { opts[key] = parseInt(el.value); }
+    else if(el.value && el.value !== '') { opts[key] = el.value; }
+  });
+
+  const entry = {
+    id:'c'+Date.now(), name, connector_type:ctype,
+    host, port: portVal ? parseInt(portVal) : null,
+    auth_method: authMethod,
+    credentials: creds,
+    options: opts, status:'unknown', created_at:new Date().toISOString()
+  };
+  state.connections.push(entry);
+
+  // Hide the panel and refresh the connection dropdown
+  document.getElementById('ex-new-conn-panel').style.display = 'none';
+  const sel = document.getElementById('ex-conn');
+  if(_EXTRACT_CONNECTORS[ctype]){
+    const opt = document.createElement('option');
+    opt.value = entry.id;
+    opt.dataset.type = ctype;
+    opt.textContent = `${name} (${ctype})`;
+    sel.appendChild(opt);
+    sel.value = entry.id;
+    _exUpdateTarget();
+  }
+  document.getElementById('ex-status').innerHTML = `<span style="color:var(--green-tx)">Connection "${name}" added</span>`;
 }
 
 function _exUpdateTarget(){
